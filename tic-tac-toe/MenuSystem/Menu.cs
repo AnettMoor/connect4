@@ -14,7 +14,6 @@ public class Menu
             // control check - dictionary
             
             
-            
             MenuItems.Add(item);
         }
     }
@@ -28,12 +27,21 @@ public class Menu
             DisplayMenu();
             
             // get user input
-            Console.Write("Please make a slection: ");
+            Console.Write("Please make a selection: ");
             var userInput = Console.ReadLine();
+            
             // validate input
+            if (userInput == "1")
+                // create new + edit
+            if (userInput == "2")   
+                // load previous
+            if (userInput == "3")  
+                // settings
+                
+                
             // execute choice
             
-            if(userInput == "X")
+            if(userInput == "x")
             {
                 menuIsDone = true;
             }
