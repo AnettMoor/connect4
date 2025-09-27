@@ -1,23 +1,14 @@
 ﻿namespace MenuSystem;
 
 
-public class MenuItem
-
-{
-    public string Label { get; set; } = default!; // lables should not be fixed - tööül, they need to be updated
+public class MenuItem {
     public string Key { get; set; } = default!;
-    
-    
-    // thing that should happen...
-    // exit, return to prev, and return to main do not have actions
-    // all other menu items should have actions
-    public Action<string>? RunThisThingWhenMenuItemIsSelected{ get; set; }
-    
-    
+    public string Value { get; set; } = default!;
+
+    public Func<string>? MethodToRun { get; set; }
     
     public override string ToString()
     {
-        return $"{Key}) {Label}";
+        return $"{Key}) {Value}";
     }
-    
 }

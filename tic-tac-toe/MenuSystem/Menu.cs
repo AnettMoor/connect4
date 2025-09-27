@@ -2,61 +2,129 @@
 
 public class Menu
 {
-    public List<MenuItem> MenuItems { get; set; } = [];
-
-
-    public void AddMenuItems(List<MenuItem> items)
+    private string Title { get; set; } = default!;
+    private Dictionary<string, MenuItem> MenuItems { get; set; } = new();
+    
+    private EMenuLevel Level { get; set; }
+    
+    //basic menu functions
+    private MenuItem x = new MenuItem() { Key = "x", Value = "Return to previous (Exit)" };
+    private MenuItem m = new MenuItem()  { Key = "m", Value = "Return to main menu" };
+    private MenuItem b = new MenuItem() { Key = "b", Value = "Back to previous menu" };
+    
+    public void AddMenuItem(string key, string value, Func<string> methodToRun)
     {
-        // check for validity
-        // add 
-        foreach (var item in items)
+        if (MenuItems.ContainsKey(key))
         {
-            // control check - dictionary
-            
-            
-            MenuItems.Add(item);
+            throw new ArgumentException($"menu item {key} already exists");
         }
+        MenuItems[key] = new MenuItem() { Key = key, Value = value, MethodToRun = methodToRun };
     }
     
-    public void Run()
+    public Menu(string title, EMenuLevel level)
     {
-        var menuIsDone = false;
+        Title = title;
+        Level = level;
+
+        switch (level)
+        {
+            case EMenuLevel.Root:
+                MenuItems[x.Key] = x;
+                break;
+            case EMenuLevel.FirstLevel:
+                MenuItems[m.Key] = m;
+                MenuItems[x.Key] = x;
+                break;
+            case EMenuLevel.Other:
+                MenuItems[b.Key] = b;
+                MenuItems[m.Key] = m;
+                MenuItems[x.Key] = x;
+                break;
+        }
+    }
+
+    public string Run()
+    {
+        Console.Clear();
+        var menuRunning = true;
+        var userChoice = "";
+
         do
         {
-            //  display menu
             DisplayMenu();
-            
-            // get user input
-            Console.Write("Please make a selection: ");
-            var userInput = Console.ReadLine();
-            
-            // validate input
-            if (userInput == "1")
-                // create new + edit
-            if (userInput == "2")   
-                // load previous
-            if (userInput == "3")  
-                // settings
-                
-                
-            // execute choice
-            
-            if(userInput == "x")
+            Console.Write("Select and option: ");
+
+            var input = Console.ReadLine();
+            if (input == null)
             {
-                menuIsDone = true;
+                Console.WriteLine("invalid input");
+                continue;
+            }
+
+            userChoice = input.Trim().ToLower();
+            
+            // is userchoice valid on current level checks
+            if (!ChoiceIsValidOnThisLevel(userChoice))
+            {
+                Console.WriteLine($"'{userChoice}' is not valid at this menu level.");
+                continue;
             }
             
-        } while (!menuIsDone);
+            if (userChoice == "x" || userChoice == "m" || userChoice == "b")
+            {
+                menuRunning = false;
+            }
+            else
+            {
+                if (MenuItems.ContainsKey(userChoice))
+                {
+                    var returnValueFromMethodToRun = MenuItems[userChoice].MethodToRun?.Invoke();
+                    if (returnValueFromMethodToRun == "m" && Level != EMenuLevel.Other)
+                    {
+                        menuRunning = false;
+                        userChoice = "m";
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Invalid option. Please try again.");
+                }
+            }
+            Console.WriteLine();
+        } while (menuRunning);
+
+        return userChoice;
     }
-    
-        // loop back to top
+
+    private void DisplayMenu()
+    {
+        Console.WriteLine(Title);
+        Console.WriteLine("--------------------");
         
-        
-        
-        private void DisplayMenu()
+        // printing out the menu in the correct order
+        foreach (var item in MenuItems.Values.Where(i => i.Key != "x" && i.Key != "m" && i.Key != "b"))
         {
-            foreach (var item in MenuItems)
-                Console.WriteLine(item.Label);
+            Console.WriteLine(item);
         }
+        if (MenuItems.ContainsKey("b")) Console.WriteLine(MenuItems["b"]);
+        if (MenuItems.ContainsKey("m")) Console.WriteLine(MenuItems["m"]);
+        Console.WriteLine(MenuItems["x"]);
         
+    }
+
+    private bool ChoiceIsValidOnThisLevel(string choice)
+    {
+        // root level - b, m not allowed
+        if (Level == EMenuLevel.Root && (choice == "m" || choice == "b"))
+        {
+            return false;
+        }
+        // first level - b not allowed
+        if (Level == EMenuLevel.FirstLevel && choice == "b")
+        {
+            return false;
+        }
+        // third level, everything allowed
+        return true;
+    }
 }
