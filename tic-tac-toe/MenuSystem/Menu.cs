@@ -8,7 +8,7 @@ public class Menu
     private EMenuLevel Level { get; set; }
     
     //basic menu functions
-    private MenuItem x = new MenuItem() { Key = "x", Value = "Return to previous (Exit)" };
+    private MenuItem x = new MenuItem() { Key = "x", Value = "Exit" };
     private MenuItem m = new MenuItem()  { Key = "m", Value = "Return to main menu" };
     private MenuItem b = new MenuItem() { Key = "b", Value = "Back to previous menu" };
     
@@ -70,7 +70,7 @@ public class Menu
                 continue;
             }
             
-            if (userChoice == "x" || userChoice == "m" || userChoice == "b")
+            if ( userChoice == "x" || userChoice == "m" || userChoice == "b")
             {
                 menuRunning = false;
             }
@@ -79,7 +79,15 @@ public class Menu
                 if (MenuItems.ContainsKey(userChoice))
                 {
                     var returnValueFromMethodToRun = MenuItems[userChoice].MethodToRun?.Invoke();
-                    if (returnValueFromMethodToRun == "m" && Level != EMenuLevel.Other)
+
+                    // quit
+                    if (returnValueFromMethodToRun == "x")
+                    {
+                        menuRunning = false;
+                        userChoice = "x";
+                    }
+                    // if "back to main" and level is not already main -> go back to main
+                    if (returnValueFromMethodToRun == "m" && Level != EMenuLevel.Root)
                     {
                         menuRunning = false;
                         userChoice = "m";
