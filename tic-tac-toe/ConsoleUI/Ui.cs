@@ -12,67 +12,70 @@ public static class Ui
 
     public static void DrawBoard(ECellState[,] gameBoard)
     {
-        
+        // write column numbers
         Console.Write("    ");
         Console.Write("   "); //cylindrical
         for (int x = 0; x < gameBoard.GetLength(0); x++)
         {
             Console.Write("|");
-            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.ForegroundColor = ConsoleColor.DarkBlue;
             Console.Write(GetNumberRepresentation(x + 1));
             Console.ResetColor();
         }
-
         Console.Write("|   "); //cylindrical
         Console.WriteLine();
 
+        
         // write cells
         for (int y = 0; y < gameBoard.GetLength(1); y++)
         {
-            // main board with cylindrical padding left
-            for (int x = 0; x < gameBoard.GetLength(0) + 1; x++)
-            {
-                // cylindrical cells left
-                if (x == 1)
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                    Console.Write("---");
-                    Console.ResetColor();
-                    Console.Write("+");
-                    Console.Write("---+");
-                }
-                else
-                {
-                    Console.Write("---+");
-                }
-            }
+            // CELL LINES/OUTSIDES
+            // number column lines
+            Console.Write("---+");
             
-            // cylindrical padding right
+            // left cylinder cells lines
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+            Console.Write("---");
+            Console.ResetColor();
+            Console.Write("+");
+            
+            // main board lines
+            for (int x = 1; x < gameBoard.GetLength(0) + 1; x++)
+            {
+                Console.Write("---+");
+            }
+
+            // cylindrical cells right
             Console.ForegroundColor = ConsoleColor.DarkMagenta;
             Console.WriteLine("---");
             Console.ResetColor();
+
             
-            // write column numbers
-            Console.ForegroundColor = ConsoleColor.Magenta;
+            // CELL INSIDES 
+            // write row numbers
+            Console.ForegroundColor = ConsoleColor.DarkBlue;
             Console.Write(GetNumberRepresentation(y + 1));
             Console.ResetColor();
             
-            // mark cylindrical horizontal
-            Console.ForegroundColor = ConsoleColor.DarkMagenta;
-            Console.Write("|" + GetCellRepresentation(gameBoard[gameBoard.GetLength(0) - 1, y]));
-            Console.ResetColor();
-            
-            // mark x o main NORMAL CELLS
-            for (int x = 0; x < gameBoard.GetLength(0); x++)
-            {
-                Console.Write("|" + GetCellRepresentation(gameBoard[x, y]));
-            }
-            
-            // cylindrical cells input
+            // left cylinder cells
             Console.Write("|");
             Console.ForegroundColor = ConsoleColor.DarkMagenta;
-            Console.Write(GetCellRepresentation(gameBoard[0, y]));
+            Console.Write(GetCellRepresentation(gameBoard[gameBoard.GetLength(0) - 1, y]));
             Console.ResetColor();
+            
+            // mark x o main
+            for (int x = 0; x < gameBoard.GetLength(0); x++)
+                if (x == gameBoard.GetLength(0) - 1)
+                {
+                    Console.Write("|" + GetCellRepresentation(gameBoard[x, y]) + "|");
+                }
+                else Console.Write("|" + GetCellRepresentation(gameBoard[x, y]));
+
+            // right cylinder cells
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+            Console.Write(GetCellRepresentation(gameBoard[0, y]));;
+            Console.ResetColor();
+            
             Console.WriteLine();
         }
     }
@@ -92,5 +95,4 @@ public static class Ui
             ECellState.OWin => "OOO",
             _ => " ? "
         };
-    
 }
