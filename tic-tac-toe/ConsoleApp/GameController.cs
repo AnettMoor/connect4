@@ -39,30 +39,22 @@ public class GameController
 
             if (input == null) continue;
             var parts = input.Split(",");
-            
-            //input format checks
-            if (parts.Length != 2 ||
-                !int.TryParse(parts[0], out var x) ||
-                !int.TryParse(parts[1], out var y) ||
-                x < 1 || y < 1 ||
-                x > GameBrain.GetBoard().GetLength(0) ||
-                y > GameBrain.GetBoard().GetLength(1))
-            {
-                Console.WriteLine("Invalid input. Try again...");
-                Console.ReadKey();
-                continue;
-            }
 
-            GameBrain.ProcessMove(x - 1, y - 1);
-
-            // display final board + winner
-            var winner = GameBrain.GetWinner(x - 1, y - 1);
-            if (winner != ECellState.Empty)
+            if (parts.Length == 2)
             {
-                // TODO: move to ui (???)
-                Ui.DrawBoard(GameBrain.GetBoard()); // final board
-                Console.WriteLine("Winner is: " + (winner == ECellState.XWin ? "X" : "O")); // winner
-                break;
+                if (int.TryParse(parts[0], out var x) && int.TryParse(parts[1], out var y))
+                {
+                    if (GameBrain.BoardCoordinatesAreValid(x - 1, y - 1))
+                        GameBrain.ProcessMove(x - 1, y - 1);
+
+                    var winner = GameBrain.GetWinner(x - 1, y - 1);
+                    if (winner != ECellState.Empty)
+                    {
+                        // TODO: move to ui
+                        Console.WriteLine("Winner is: " + (winner == ECellState.XWin ? "X" : "O"));
+                        break;
+                    }
+                }
             }
         } while (gameOver == false);
     }
