@@ -29,7 +29,9 @@ public class GameBrain
 
     public void ProcessMove(int x, int y)
     {
-        if (GameBoard[x, y] == ECellState.Empty)
+        if (GameBoard[x, y] == ECellState.Empty 
+            && x <= GameConfiguration.BoardWidth 
+            && y <= GameConfiguration.BoardHeight)
         {
             GameBoard[x, y] = NextMoveByX ? ECellState.X : ECellState.O; // place the correct symbol
             NextMoveByX = !NextMoveByX; // switch turns
@@ -51,8 +53,8 @@ public class GameBrain
 
     public bool BoardCoordinatesAreValid(int x, int y)
     {
-        return x >= 0 && x < GameConfiguration.BoardWidth && 
-               y >= 0 && y < GameConfiguration.BoardHeight;
+        return x >= 0 && x < (GameConfiguration.BoardWidth) && 
+               y >= 0 && y < (GameConfiguration.BoardHeight);
     }
     
     // Cylindrical wrapping

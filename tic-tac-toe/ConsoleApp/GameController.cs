@@ -37,25 +37,37 @@ public class GameController
                 gameOver = true;
             }
 
-            // TODO: validate input
-            if (input == null) continue;
-            var parts = input.Split(",");
-            if (parts.Length == 2)
+            try
             {
-                if (int.TryParse(parts[0], out var x) && int.TryParse(parts[1], out var y))
+                if (input == null) continue;
+                var parts = input.Split(",");
+                if (parts.Length == 2)
                 {
-                    GameBrain.ProcessMove(x - 1, y - 1);
-
-                    // display final board + winner
-                    var winner = GameBrain.GetWinner(x - 1, y - 1);
-                    if (winner != ECellState.Empty)
+                    if (int.TryParse(parts[0], out var x) && int.TryParse(parts[1], out var y))
                     {
-                        // TODO: move to ui (???)
-                        Ui.DrawBoard(GameBrain.GetBoard()); // final board
-                        Console.WriteLine("Winner is: " + (winner == ECellState.XWin ? "X" : "O")); // winner
-                        break;
+                        GameBrain.ProcessMove(x - 1, y - 1);
+
+                        // display final board + winner
+                        var winner = GameBrain.GetWinner(x - 1, y - 1);
+                        if (winner != ECellState.Empty)
+                        {
+                            // TODO: move to ui (???)
+                            Ui.DrawBoard(GameBrain.GetBoard()); // final board
+                            Console.WriteLine("Winner is: " + (winner == ECellState.XWin ? "X" : "O")); // winner
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        throw new FormatException("Input must be in format x,y");
                     }
                 }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                Console.WriteLine("Press any key to try again...");
+                Console.ReadKey();
             }
         } while (gameOver == false);
     }
