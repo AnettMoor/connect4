@@ -29,9 +29,7 @@ public class GameBrain
 
     public void ProcessMove(int x, int y)
     {
-        if (GameBoard[x, y] == ECellState.Empty 
-            && x <= GameConfiguration.BoardWidth 
-            && y <= GameConfiguration.BoardHeight)
+        if (GameBoard[x, y] == ECellState.Empty)
         {
             GameBoard[x, y] = NextMoveByX ? ECellState.X : ECellState.O; // place the correct symbol
             NextMoveByX = !NextMoveByX; // switch turns
