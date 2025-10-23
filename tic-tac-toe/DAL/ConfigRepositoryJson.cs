@@ -23,8 +23,7 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
 
         return res;
     }
-
-    // TODO: what if ve just need to update already existing config (with file name change)
+    
     public string Save(GameConfiguration data)
     {
         var jsonStr = JsonSerializer.Serialize(data);
