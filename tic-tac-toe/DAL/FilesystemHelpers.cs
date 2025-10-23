@@ -2,7 +2,7 @@
 
 public class FilesystemHelpers
 {
-    private const string AppName = "tictactoe";
+    private const string AppName = "connect4";
     public static string GetConfigDirectory()
     {
         var homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

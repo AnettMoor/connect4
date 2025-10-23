@@ -1,6 +1,10 @@
 ﻿using System.Text.Json;
 using BLL;
 
+using System;
+using System.IO;
+using System.Linq;
+
 namespace DAL;
 
 public class ConfigRepositoryJson : IRepository<GameConfiguration>
@@ -10,52 +14,85 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
         var dir = FilesystemHelpers.GetConfigDirectory();
         var res = new List<string>();
 
-        foreach (var fullFilename in Directory.EnumerateFiles(dir))
-        {
-            var fileName = Path.GetFileName(fullFilename);
-            if (!fullFilename.EndsWith(".json")) continue;
-            var fileNameNoExtension = Path.GetFileNameWithoutExtension(fullFilename);
+        foreach (var fullFileName in Directory.EnumerateFiles(dir))
+        {  
+            var fileName = Path.GetFileName(fullFileName);
+            if (!fileName.EndsWith(".json")) continue;
+            res.Add(Path.GetFileNameWithoutExtension(fileName));
         }
 
         return res;
     }
 
-    // TODO: what if we just need to update already existing config
+    // TODO: what if ve just need to update already existing config (with file name change)
     public string Save(GameConfiguration data)
     {
-        // data -> json
         var jsonStr = JsonSerializer.Serialize(data);
 
-        // save the data:
-
-        // filename
-        // TODO: sanitize data.Name, its unsafe to use it directly
-        var filename = $"{data.Name} - {data.BoardWidth}x{data.BoardHeight} - win: {data.WinCondition}" + ".json";
-
-        // file location
-        var fullFileName = FilesystemHelpers.GetConfigDirectory() + Path.DirectorySeparatorChar + filename;
+        // sanitize filename
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var safeName = new string(data.Name.Where(c => !invalidChars.Contains(c)).ToArray());
+        safeName = safeName.Replace(' ', '_').Trim();
         
-        // save it
+        var timeStamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var fileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition}_{timeStamp}" + ".json";
+        var fullFileName = FilesystemHelpers.GetConfigDirectory() + Path.DirectorySeparatorChar + fileName;
         File.WriteAllText(fullFileName, jsonStr);
-        return filename;
+
+        return fileName;
     }
-    
-    public  GameConfiguration Load(string id)
+
+    public GameConfiguration Load(string id)
     {
         var jsonFileName = FilesystemHelpers.GetConfigDirectory() + Path.DirectorySeparatorChar + id + ".json";
-        var jsonText =  File.ReadAllText(jsonFileName);
-        var conf =  JsonSerializer.Deserialize<GameConfiguration>(jsonText);
-        
+        var jsonText = File.ReadAllText(jsonFileName);
+        var conf = JsonSerializer.Deserialize<GameConfiguration>(jsonText);
+
         return conf ?? throw new NullReferenceException("Json deserialization returned null. Data: " + jsonText);
     }
 
     public void Delete(string id)
     {
         var jsonFileName = FilesystemHelpers.GetConfigDirectory() + Path.DirectorySeparatorChar + id + ".json";
-
         if (File.Exists(jsonFileName))
         {
             File.Delete(jsonFileName);
         }
+    }
+
+    public string Update(GameConfiguration data, string oldFileName)
+    {
+        var configDir = FilesystemHelpers.GetConfigDirectory();
+        var oldFullPath = Path.Combine(configDir, oldFileName);
+        
+        if (!oldFullPath.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            oldFullPath += ".json";
+        }
+        
+        if (!File.Exists(oldFullPath))
+            throw new FileNotFoundException("Config file not found.", oldFullPath);
+        
+        var jsonStr = JsonSerializer.Serialize(data);
+
+        // sanitize filename
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var safeName = new string(data.Name.Where(c => !invalidChars.Contains(c)).ToArray());
+        safeName = safeName.Replace(' ', '_').Trim();
+        
+        var timeStamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var newFileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition}_{timeStamp}.json";
+        var newFullPath = Path.Combine(configDir, newFileName);
+
+        // delete old file
+        if (!oldFullPath.Equals(newFullPath, StringComparison.OrdinalIgnoreCase))
+        {
+            File.Delete(oldFullPath);
+        }
+
+        // Save new
+        File.WriteAllText(newFullPath, jsonStr);
+
+        return newFileName;
     }
 }

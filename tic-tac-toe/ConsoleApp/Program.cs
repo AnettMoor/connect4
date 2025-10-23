@@ -28,14 +28,85 @@ menuConfig.AddMenuItem("l", "Load", () =>
     var userChoice = Console.ReadLine();
     return "abc";
 });
-menuConfig.AddMenuItem("e", "Edit", () => { return "abc"; });
+menuConfig.AddMenuItem("e", "Edit", () =>
+{
+
+    {
+        var data = configRepo.List();
+        for (int i = 0; i < data.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}: {data[i]}");
+        }
+
+        Console.Write("Select config to edit, 0 to skip: ");
+        var userChoiceStr = Console.ReadLine();
+        if (!int.TryParse(userChoiceStr, out int userChoice))
+        {
+            Console.WriteLine("Invalid input!");
+            return "abc";
+        }
+
+        if (userChoice <= 0 || userChoice > data.Count)
+        {
+            Console.WriteLine("Skipped.");
+            return "abc";
+        }
+
+        var selectedConfig = data[userChoice - 1];
+        var gameConfig = configRepo.Load(selectedConfig);
+
+        // user modifications
+        Console.Write("Enter new name: ");
+        gameConfig.Name = Console.ReadLine();
+
+        Console.Write("Enter new board width: ");
+        gameConfig.BoardWidth = int.Parse(Console.ReadLine());
+
+        Console.Write("Enter new board height: ");
+        gameConfig.BoardHeight = int.Parse(Console.ReadLine());
+
+        // save new name
+        var newFileName = configRepo.Update(gameConfig, selectedConfig);
+
+        Console.WriteLine($"Config updated. New file: {newFileName}");
+        return "abc";
+    }
+});
+
 menuConfig.AddMenuItem("c", "Create", () =>
 {
     configRepo.Save(new GameConfiguration(){Name = "Classical"});
     return "abc";
 });
 
-menuConfig.AddMenuItem("d", "Delete", () => { return "abc"; });
+menuConfig.AddMenuItem("d", "Delete", () =>
+{
+    var data = configRepo.List();
+    for (int i = 0; i < data.Count; i++)
+    {
+        Console.WriteLine($"{i + 1}: {data[i]}");
+    }
+
+    Console.Write("Select config to delete, 0 to skip: ");
+    var userChoiceStr = Console.ReadLine();
+    if (!int.TryParse(userChoiceStr, out int userChoice))
+    {
+        Console.WriteLine("Invalid input!");
+        return "abc";
+    }
+
+    if (userChoice <= 0 || userChoice > data.Count)
+    {
+        Console.WriteLine("Skipped.");
+        return "abc";
+    }
+
+    var selectedConfig = data[userChoice - 1];
+    configRepo.Delete(selectedConfig);
+    Console.WriteLine($"Deleted: {selectedConfig}");
+
+    return "abc";
+});
 
 
 menu0.AddMenuItem("c", "Game Configurations", menuConfig.Run);
