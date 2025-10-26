@@ -11,7 +11,6 @@ public interface IRepository<TData>
     string Save(TData data);
     TData Load(string id);
     void Delete(string id);
-
     string Update(TData data, string oldFileName);
 
 }
