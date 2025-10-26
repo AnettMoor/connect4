@@ -2,8 +2,19 @@
 using ConsoleApp;
 using DAL;
 using MenuSystem;
+using Microsoft.EntityFrameworkCore;
 
 Console.WriteLine("Hello, Connect4!");
+
+
+IRepository<GameConfiguration> configRepo;
+
+// Choose ONE!
+configRepo = new ConfigRepositoryJson();
+
+//using var dbContext = GetDbContext();
+//configRepo = new ConfigRepositoryEF(dbContext);
+
 
 var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
 menu0.AddMenuItem("n", "New game", () =>
@@ -14,7 +25,6 @@ menu0.AddMenuItem("n", "New game", () =>
 });
 
 var menuConfig = new Menu("Connect4 Configurations", EMenuLevel.FirstLevel);
-var configRepo = new ConfigRepositoryJson();
 menuConfig.AddMenuItem("l", "Load", () =>
 {
     var count = 0;
@@ -53,7 +63,7 @@ menuConfig.AddMenuItem("e", "Edit", () =>
         }
 
         var selectedConfig = data[userChoice - 1];
-        var gameConfig = configRepo.Load(selectedConfig);
+        var gameConfig = configRepo.Load(selectedConfig.id);
 
         // user modifications
         Console.Write("Enter new name: ");
@@ -66,7 +76,7 @@ menuConfig.AddMenuItem("e", "Edit", () =>
         gameConfig.BoardHeight = int.Parse(Console.ReadLine());
 
         // save new name
-        var newFileName = configRepo.Update(gameConfig, selectedConfig);
+        var newFileName = configRepo.Update(gameConfig, selectedConfig.id);
 
         Console.WriteLine($"Config updated. New file: {newFileName}");
         return "abc";
@@ -102,7 +112,7 @@ menuConfig.AddMenuItem("d", "Delete", () =>
     }
 
     var selectedConfig = data[userChoice - 1];
-    configRepo.Delete(selectedConfig);
+    configRepo.Delete(selectedConfig.id);
     Console.WriteLine($"Deleted: {selectedConfig}");
 
     return "abc";
@@ -114,3 +124,27 @@ menu0.AddMenuItem("c", "Game Configurations", menuConfig.Run);
 menu0.Run();
 
 Console.WriteLine("We are DONE.......");
+
+AppDbContext GetDbContext()
+{
+    // ========================= DB STUFF ========================
+    var homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    homeDirectory = homeDirectory + Path.DirectorySeparatorChar;
+
+// We are using SQLite
+    var connectionString = $"Data Source={homeDirectory}app.db";
+
+    var contextOptions = new DbContextOptionsBuilder<AppDbContext>()
+        .UseSqlite(connectionString)
+        .EnableDetailedErrors()
+        .EnableSensitiveDataLogging()
+        //.LogTo(Console.WriteLine)
+        .Options;
+
+    var dbContext = new AppDbContext(contextOptions);
+    
+    // apply any pending migrations (recreates db as needed)
+    dbContext.Database.Migrate();
+    
+    return dbContext;
+}

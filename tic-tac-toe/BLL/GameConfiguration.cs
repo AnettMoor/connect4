@@ -1,6 +1,6 @@
 ﻿namespace BLL;
 
-public class GameConfiguration
+public class GameConfiguration : BaseEntity
 {
     public string Name { get; set; } = "Classical 6x6";
     public int BoardWidth { get; set; } = 5;

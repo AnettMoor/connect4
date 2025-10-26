@@ -9,16 +9,19 @@ namespace DAL;
 
 public class ConfigRepositoryJson : IRepository<GameConfiguration>
 {
-    public List<string> List()
+    public List<(string id, string description)> List()
     {
         var dir = FilesystemHelpers.GetConfigDirectory();
-        var res = new List<string>();
+        var res = new List<(string id, string description)>();
 
         foreach (var fullFileName in Directory.EnumerateFiles(dir))
         {  
             var fileName = Path.GetFileName(fullFileName);
             if (!fileName.EndsWith(".json")) continue;
-            res.Add(Path.GetFileNameWithoutExtension(fileName));
+            res.Add(
+                (Path.GetFileName(fileName),
+            Path.GetFileNameWithoutExtension(fileName))
+            );
         }
 
         return res;
@@ -43,7 +46,10 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
 
     public GameConfiguration Load(string id)
     {
-        var jsonFileName = FilesystemHelpers.GetConfigDirectory() + Path.DirectorySeparatorChar + id + ".json";
+        var fileName = id.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            ? id
+            : id + ".json";
+        var jsonFileName = Path.Combine(FilesystemHelpers.GetConfigDirectory(), fileName);
         var jsonText = File.ReadAllText(jsonFileName);
         var conf = JsonSerializer.Deserialize<GameConfiguration>(jsonText);
 
