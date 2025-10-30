@@ -28,6 +28,7 @@ var menuConfig = new Menu("Connect4 Configurations", EMenuLevel.FirstLevel);
 menuConfig.AddMenuItem("l", "Load", () =>
 {
     var count = 0;
+        
     var data = configRepo.List();
     foreach (var configName in data)
     {
@@ -131,7 +132,7 @@ AppDbContext GetDbContext()
     var homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
     homeDirectory = homeDirectory + Path.DirectorySeparatorChar;
 
-// We are using SQLite
+    // We are using SQLite
     var connectionString = $"Data Source={homeDirectory}connect4.db";
 
     var contextOptions = new DbContextOptionsBuilder<AppDbContext>()

@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
         
     }
 
+    // prevent accidental deletions
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

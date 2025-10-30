@@ -96,6 +96,7 @@ public class GameBrain
                 (nextX, nextY) = Wrapping(nextX, nextY, dirX, dirY);
             }
 
+
             // if we didn't find enough squares -> flip direction
             if (count < GameConfiguration.WinCondition)
             {
