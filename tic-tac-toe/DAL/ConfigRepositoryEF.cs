@@ -12,7 +12,7 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
         _dbContext = dbContext;
     }
     
-    // TODO, put timestamp into menu display list instead of id.
+    // TODO instead of key display timestamp
     public List<(string id, string description)> List()
     {
         var res = new List<(string id, string description)>();
