@@ -30,7 +30,7 @@ public class GameController
             Ui.DrawBoard(GameBrain.GetBoard());
             Ui.ShowNextPlayer(GameBrain.IsNextPlayerX());
 
-            Console.Write("Choice (x,y):");
+            Console.Write("Choice (x):");
             var input = Console.ReadLine();
             if (input?.ToLower() == "x")
             {
@@ -39,24 +39,39 @@ public class GameController
 
             if (input == null) continue;
             var parts = input.Split(",");
-            
+
             //input format checks
-            if (parts.Length != 2 ||
-                !int.TryParse(parts[0], out var x) ||
-                !int.TryParse(parts[1], out var y) ||
-                x < 1 || y < 1 ||
-                x > GameBrain.GetBoard().GetLength(0) ||
-                y > GameBrain.GetBoard().GetLength(1))
+            if (!int.TryParse(parts[0], out var x) ||
+                x < 1 ||
+                x > GameBrain.GetBoard().GetLength(0))
             {
                 Console.WriteLine("Invalid input. Try again...");
                 Console.ReadKey();
                 continue;
             }
 
-            GameBrain.ProcessMove(x - 1, y - 1);
+            // connect4 - drop the move in first free space in column
+            int y = -1;
+            for (var row = GameBrain.GetBoard().GetLength(1) - 1; row >= 0; row--)
+            {
+                if (GameBrain.GetBoard()[x-1, row] == ECellState.Empty)
+                {
+                    y = row;
+                    break;
+                }
+            }
+            if (y == -1)
+            {
+                Console.WriteLine("Column full, try again...");
+                Console.ReadKey();
+                continue;
+            }
+
+            
+            GameBrain.ProcessMove(x - 1, y);
 
             // display final board + winner
-            var winner = GameBrain.GetWinner(x - 1, y - 1);
+            var winner = GameBrain.GetWinner(x - 1, y);
             if (winner != ECellState.Empty)
             {
                 // TODO: move to ui (???)
