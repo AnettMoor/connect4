@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+﻿﻿using System.Text.Json;
 using BLL;
 
 using System;
@@ -36,10 +36,10 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
         var safeName = new string(data.Name.Where(c => !invalidChars.Contains(c)).ToArray());
         safeName = safeName.Replace(' ', '_').Trim();
         
-        var timeStamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        var fileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition}_{timeStamp}" + ".json";
+        var fileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition} - {data.CreatedAt}" + ".json";
         var fullFileName = FilesystemHelpers.GetConfigDirectory() + Path.DirectorySeparatorChar + fileName;
         File.WriteAllText(fullFileName, jsonStr);
+        
 
         return fileName;
     }
@@ -58,11 +58,12 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
 
     public void Delete(string id)
     {
-        var jsonFileName = FilesystemHelpers.GetConfigDirectory() + Path.DirectorySeparatorChar + id + ".json";
+        if (!id.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            id += ".json";
+
+        var jsonFileName = Path.Combine(FilesystemHelpers.GetConfigDirectory(), id);
         if (File.Exists(jsonFileName))
-        {
             File.Delete(jsonFileName);
-        }
     }
 
     public string Update(GameConfiguration data, string oldFileName)

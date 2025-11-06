@@ -1,8 +1,12 @@
-﻿using BLL;
+﻿﻿using BLL;
 using ConsoleApp;
 using DAL;
 using MenuSystem;
 using Microsoft.EntityFrameworkCore;
+ 
+GameController? lastController = null;
+GameConfiguration? lastGameConfig = null;
+
 
 Console.WriteLine("Hello, Connect4!");
 
@@ -10,38 +14,76 @@ Console.WriteLine("Hello, Connect4!");
 IRepository<GameConfiguration> configRepo;
 
 // Choose ONE!
-//configRepo = new ConfigRepositoryJson();
+configRepo = new ConfigRepositoryJson();
 
-using var dbContext = GetDbContext();
-configRepo = new ConfigRepositoryEF(dbContext);
+//using var dbContext = GetDbContext();
+//configRepo = new ConfigRepositoryEF(dbContext);
 
 
 var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
 menu0.AddMenuItem("n", "New game", () =>
 {
-    var controller = new GameController();
-    controller.GameLoop();
+    lastController = new GameController();
+    lastController.GameLoop();
+
+    // Store game state for later saving
+    var boardList = lastController.GetBoardAsList();
+    lastGameConfig = new GameConfiguration()
+    {
+        Name = "Classical", 
+        Board = boardList,
+        BoardWidth = boardList.Count,
+        BoardHeight = boardList[0].Count,
+        WinCondition = 4,
+    };
+
+    Console.WriteLine("Game finished. Use 'Save game' to save this board.");
     return "abc";
 });
 
 var menuConfig = new Menu("Connect4 Configurations", EMenuLevel.FirstLevel);
+
 menuConfig.AddMenuItem("l", "Load", () =>
 {
-    var count = 0;
-        
     var data = configRepo.List();
-    foreach (var configName in data)
+    if (data.Count == 0)
     {
-        Console.WriteLine((count + 1) + ": " + configName);
-        count++;
+        Console.WriteLine("No saved configurations found.");
+        return "abc";
     }
-    Console.Write("Select config to load, 0 to skip:");
-    var userChoice = Console.ReadLine();
+
+    for (int i = 0; i < data.Count; i++)
+        Console.WriteLine($"{i + 1}: {data[i].description}");
+
+    Console.Write("Select config to load, 0 to skip: ");
+    if (!int.TryParse(Console.ReadLine(), out int userChoice) || userChoice <= 0 || userChoice > data.Count)
+    {
+        Console.WriteLine("Skipped.");
+        return "abc";
+    }
+
+    var selectedId = data[userChoice - 1].id;
+    var gameConfig = configRepo.Load(selectedId);
+
+    // Convert saved board list to 2D array if it exists
+    ECellState[,] loadedBoard = new ECellState[gameConfig.BoardWidth, gameConfig.BoardHeight];
+    if (gameConfig.Board != null)
+    {
+        for (int x = 0; x < gameConfig.BoardWidth; x++)
+        for (int y = 0; y < gameConfig.BoardHeight; y++)
+            loadedBoard[x, y] = gameConfig.Board[x][y];
+    }
+
+    // Start the game with the loaded configuration
+    lastController = new GameController(gameConfig, "Player 1", "Player 2", loadedBoard);
+    lastController.GameLoop();
+
     return "abc";
 });
+
+
 menuConfig.AddMenuItem("e", "Edit", () =>
 {
-
     {
         var data = configRepo.List();
         for (int i = 0; i < data.Count; i++)
@@ -86,7 +128,9 @@ menuConfig.AddMenuItem("e", "Edit", () =>
 
 menuConfig.AddMenuItem("c", "Create", () =>
 {
-    configRepo.Save(new GameConfiguration(){Name = "Classical"});
+    var newConfig = new GameConfiguration() { Name = "Classical" };
+    configRepo.Save(newConfig);
+    Console.WriteLine($"New configuration created: {newConfig.Name}");
     return "abc";
 });
 
@@ -121,6 +165,25 @@ menuConfig.AddMenuItem("d", "Delete", () =>
 
 
 menu0.AddMenuItem("c", "Game Configurations", menuConfig.Run);
+
+menu0.AddMenuItem("s", "Save game", () =>
+{
+    if (lastGameConfig == null)
+    {
+        Console.WriteLine("No game to save. Play a game first.");
+        return "abc";
+    }
+
+    Console.Write("Enter a name for this saved game: ");
+    var name = Console.ReadLine();
+    if (!string.IsNullOrWhiteSpace(name))
+        lastGameConfig.Name = name;
+
+    configRepo.Save(lastGameConfig);
+    Console.WriteLine($"Game configuration saved: {lastGameConfig.Name}");
+    return "abc";
+});
+
 
 menu0.Run();
 

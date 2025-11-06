@@ -1,4 +1,4 @@
-﻿using BLL;
+﻿﻿using BLL;
 using ConsoleUI;
 
 namespace ConsoleApp;
@@ -12,73 +12,109 @@ public class GameController
         GameBrain = new GameBrain(new GameConfiguration(), "Player 1", "Player 2");
     }
 
+    public GameController(GameConfiguration configuration, string player1, string player2, ECellState[,]? board = null)
+    {
+        GameBrain = new GameBrain(configuration, player1, player2, board);
+    }
+
+    public List<List<ECellState>> GetBoardAsList()
+    {
+        return GameBrain.GetBoardAsList();
+    }
+    
+
     public void GameLoop()
     {
-        // Game loop logic here
-
-        // get the player move
-        // update gamebrain state
-        // draw out the ui
-        // when game over, stop
+        // if loaded game is finished
+        if (GameBrain.IsGameOver())
+        {
+            Console.Clear();
+            Ui.DrawBoard(GameBrain.GetBoard());
+            Console.WriteLine("This game has already ended! No more moves allowed.");
+            return;
+        }
 
         var gameOver = false;
         do
         {
             Console.Clear();
-
-            // draw the board
             Ui.DrawBoard(GameBrain.GetBoard());
             Ui.ShowNextPlayer(GameBrain.IsNextPlayerX());
 
-            Console.Write("Choice (x):");
-            var input = Console.ReadLine();
-            if (input?.ToLower() == "x")
+            Console.Write("Choice (x = quit, or column number): ");
+            var input = Console.ReadLine()?.Trim().ToLower();
+
+            if (string.IsNullOrWhiteSpace(input)) continue;
+
+            // quit (x)
+            if (input == "x")
             {
                 gameOver = true;
+                break;
             }
-
-            if (input == null) continue;
-            var parts = input.Split(",");
-
-            //input format checks
-            if (!int.TryParse(parts[0], out var x) ||
-                x < 1 ||
-                x > GameBrain.GetBoard().GetLength(0))
+            
+            // TODO save mid-game.
+            if (input == "s")
             {
-                Console.WriteLine("Invalid input. Try again...");
+                Console.WriteLine("Game saved!");
                 Console.ReadKey();
                 continue;
             }
 
-            // connect4 - drop the move in first free space in column
+            // parse move (connect 4: only x coordinate)
+            if (!int.TryParse(input, out var x))
+            {
+                Console.WriteLine("Invalid input. Enter a number, 'x' to quit");
+                Console.ReadKey();
+                continue;
+            }
+            
+            // counter starts at 0
+            x -= 1;
+
+            if (!GameBrain.BoardCoordinatesAreValid(x, 0))
+            {
+                Console.WriteLine("Invalid column. Try again...");
+                Console.ReadKey();
+                continue;
+            }
+
+            // find first available row (y)
             int y = -1;
             for (var row = GameBrain.GetBoard().GetLength(1) - 1; row >= 0; row--)
             {
-                if (GameBrain.GetBoard()[x-1, row] == ECellState.Empty)
+                if (GameBrain.GetBoard()[x, row] == ECellState.Empty)
                 {
                     y = row;
                     break;
                 }
             }
+
             if (y == -1)
             {
                 Console.WriteLine("Column full, try again...");
                 Console.ReadKey();
                 continue;
             }
-
             
-            GameBrain.ProcessMove(x - 1, y);
+            if (!GameBrain.BoardCoordinatesAreValid(x, y))
+            {
+                Console.WriteLine("Invalid move coordinates.");
+                Console.ReadKey();
+                continue;
+            }
+            GameBrain.ProcessMove(x, y);
 
-            // display final board + winner
-            var winner = GameBrain.GetWinner(x - 1, y);
+            // check winner after move
+            var winner = GameBrain.GetWinner(x, y);
             if (winner != ECellState.Empty)
             {
-                // TODO: move to ui (???)
-                Ui.DrawBoard(GameBrain.GetBoard()); // final board
-                Console.WriteLine("Winner is: " + (winner == ECellState.XWin ? "X" : "O")); // winner
+                Console.Clear();
+                Ui.DrawBoard(GameBrain.GetBoard());
+                Console.WriteLine("Winner is: " + (winner == ECellState.XWin ? "X" : "O"));
                 break;
             }
-        } while (gameOver == false);
+
+        } while (!gameOver);
     }
 }

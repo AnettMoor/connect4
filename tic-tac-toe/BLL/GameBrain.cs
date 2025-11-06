@@ -1,4 +1,4 @@
-﻿﻿namespace BLL;
+﻿﻿﻿namespace BLL;
 
 public class GameBrain
 {
@@ -9,13 +9,47 @@ public class GameBrain
 
     private bool NextMoveByX { get; set; } = true;
     
-    public GameBrain(GameConfiguration configuration, string player1Name, string player2Name)
+    
+    // for load
+    public bool IsGameOver()
+    {
+        for (int x = 0; x < GameConfiguration.BoardWidth; x++)
+        for (int y = 0; y < GameConfiguration.BoardHeight; y++)
+            if (GetWinner(x, y) != ECellState.Empty)
+                return true;
+        return false;
+    }
+
+    public List<List<ECellState>> GetBoardAsList()
+    {
+        var boardList = new List<List<ECellState>>();
+        for (int x = 0; x < GameConfiguration.BoardWidth; x++)
+        {
+            var col = new List<ECellState>();
+            for (int y = 0; y < GameConfiguration.BoardHeight; y++)
+            {
+                col.Add(GameBoard[x, y]);
+            }
+            boardList.Add(col);
+        }
+        return boardList;
+    }
+
+    
+    public GameBrain(GameConfiguration configuration, string player1Name, string player2Name, ECellState[,]? existingBoard = null)
     {
         GameConfiguration = configuration;
         Player1Name = player1Name;
         Player2Name = player2Name;
-        GameBoard = new ECellState[configuration.BoardWidth, configuration.BoardHeight];
+
+        if (existingBoard != null)
+            GameBoard = existingBoard;
+        else if (configuration.Board != null)
+            GameBoard = GameConfiguration.ListToArray(configuration.Board, configuration.BoardWidth, configuration.BoardHeight);
+        else
+            GameBoard = new ECellState[configuration.BoardWidth, configuration.BoardHeight];
     }
+
 
     public ECellState[,] GetBoard()
     {
