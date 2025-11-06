@@ -24,6 +24,19 @@ var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
 menu0.AddMenuItem("n", "New game", () =>
 {
     lastController = new GameController();
+    
+    //mid game saving
+    lastController.OnSaveGame = (gameConfig) =>
+    {
+        Console.Write("Enter a name for this saved game: ");
+        var name = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(name))
+            gameConfig.Name = name;
+
+        configRepo.Save(gameConfig);
+        Console.WriteLine($"Game saved: {gameConfig.Name}");
+    };
+
     lastController.GameLoop();
 
     // Store game state for later saving
@@ -88,8 +101,10 @@ menuConfig.AddMenuItem("e", "Edit", () =>
         var data = configRepo.List();
         for (int i = 0; i < data.Count; i++)
         {
-            Console.WriteLine($"{i + 1}: {data[i]}");
+            var (id, description) = data[i];
+            Console.WriteLine($"{i + 1}: {description}");
         }
+
 
         Console.Write("Select config to edit, 0 to skip: ");
         var userChoiceStr = Console.ReadLine();

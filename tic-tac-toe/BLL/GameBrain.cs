@@ -42,14 +42,29 @@ public class GameBrain
         Player1Name = player1Name;
         Player2Name = player2Name;
 
+        
+        // for loading existing configs
         if (existingBoard != null)
+        {
             GameBoard = existingBoard;
+        }
         else if (configuration.Board != null)
-            GameBoard = GameConfiguration.ListToArray(configuration.Board, configuration.BoardWidth, configuration.BoardHeight);
-        else
+        {
             GameBoard = new ECellState[configuration.BoardWidth, configuration.BoardHeight];
+            for (int x = 0; x < configuration.BoardWidth; x++)
+            {
+                for (int y = 0; y < configuration.BoardHeight; y++)
+                {
+                    GameBoard[x, y] = configuration.Board[x][y];
+                }
+            }
+        }
+        // create new board
+        else
+        {
+            GameBoard = new ECellState[configuration.BoardWidth, configuration.BoardHeight];
+        }
     }
-
 
     public ECellState[,] GetBoard()
     {

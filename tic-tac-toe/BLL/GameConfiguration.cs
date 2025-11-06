@@ -15,31 +15,14 @@ public class GameConfiguration : BaseEntity
     public string CreatedAt { get; set; } = DateTime.Now.ToString("HH_mm_ddMMyyyy");
 
 
-    // save functions
+    // functions for save
+    [NotMapped]
     public List<List<ECellState>>? Board { get; set; }
-
-    // Convert array to list for saving
-    public static List<List<ECellState>> ArrayToList(ECellState[,] board)
+    
+    public string? BoardData
     {
-        var list = new List<List<ECellState>>();
-        for (int x = 0; x < board.GetLength(0); x++)
-        {
-            var col = new List<ECellState>();
-            for (int y = 0; y < board.GetLength(1); y++)
-                col.Add(board[x, y]);
-            list.Add(col);
-        }
-        return list;
-    }
-
-    // Convert list to array for loading
-    public static ECellState[,] ListToArray(List<List<ECellState>> boardList, int width, int height)
-    {
-        var array = new ECellState[width, height];
-        for (int x = 0; x < width; x++)
-        for (int y = 0; y < height; y++)
-            array[x, y] = boardList[x][y];
-        return array;
+        get => Board == null ? null : JsonSerializer.Serialize(Board);
+        set => Board = value == null ? null : JsonSerializer.Deserialize<List<List<ECellState>>>(value);
     }
 }
     

@@ -6,6 +6,8 @@ namespace ConsoleApp;
 public class GameController
 {
     private GameBrain GameBrain { get; set; }
+    public Action<GameConfiguration>? OnSaveGame { get; set; }
+
 
     public GameController()
     {
@@ -41,7 +43,7 @@ public class GameController
             Ui.DrawBoard(GameBrain.GetBoard());
             Ui.ShowNextPlayer(GameBrain.IsNextPlayerX());
 
-            Console.Write("Choice (x = quit, or column number): ");
+            Console.Write("Choice (x = quit, s = save, or column number): ");
             var input = Console.ReadLine()?.Trim().ToLower();
 
             if (string.IsNullOrWhiteSpace(input)) continue;
@@ -53,12 +55,24 @@ public class GameController
                 break;
             }
             
-            // TODO save mid-game.
+            //save mid game
             if (input == "s")
             {
+                var midGameConfig = new GameConfiguration
+                {
+                    Name = "Midgame Save",
+                    Board = GameBrain.GetBoardAsList(),
+                    BoardWidth = GameBrain.GetBoard().GetLength(0),
+                    BoardHeight = GameBrain.GetBoard().GetLength(1),
+                    WinCondition = 4,
+                    CreatedAt = DateTime.Now.ToString("HH_mm_ddMMyyyy")
+                };
+
+                OnSaveGame?.Invoke(midGameConfig);
                 Console.WriteLine("Game saved!");
                 Console.ReadKey();
-                continue;
+                gameOver = true;
+                break;
             }
 
             // parse move (connect 4: only x coordinate)

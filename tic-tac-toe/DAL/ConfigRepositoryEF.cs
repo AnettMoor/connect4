@@ -12,7 +12,6 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
         _dbContext = dbContext;
     }
     
-    // TODO instead of key display timestamp
     public List<(string id, string description)> List()
     {
         var res = new List<(string id, string description)>();
@@ -21,7 +20,7 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
             res.Add(
                 (
                     dbConf.Id.ToString(),
-                    dbConf.Name
+                    $"{dbConf.Name} ({dbConf.CreatedAt})"
                 )
             );
         }
@@ -37,6 +36,8 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
             BoardWidth = data.BoardWidth,
             BoardHeight = data.BoardHeight,
             WinCondition = data.WinCondition,
+            CreatedAt = data.CreatedAt,
+            Board = data.Board,
         };
         _dbContext.GameConfigurations.Add(newEntity);
         data.Id = newEntity.Id;
@@ -63,6 +64,9 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
             BoardWidth = entity.BoardWidth,
             BoardHeight = entity.BoardHeight,
             WinCondition = entity.WinCondition,
+            CreatedAt = entity.CreatedAt,
+            Board = entity.Board,
+            
         };
         return conf;
     }
@@ -92,6 +96,8 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
         entity.BoardWidth = data.BoardWidth;
         entity.BoardHeight = data.BoardHeight;
         entity.WinCondition = data.WinCondition;
+        entity.CreatedAt = data.CreatedAt;
+        entity.Board = data.Board;
 
         _dbContext.SaveChanges();
 
