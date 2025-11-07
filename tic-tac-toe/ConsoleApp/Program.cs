@@ -1,4 +1,4 @@
-﻿﻿using BLL;
+﻿using BLL;
 using ConsoleApp;
 using DAL;
 using MenuSystem;
@@ -14,10 +14,10 @@ Console.WriteLine("Hello, Connect4!");
 IRepository<GameConfiguration> configRepo;
 
 // Choose ONE!
-configRepo = new ConfigRepositoryJson();
+//configRepo = new ConfigRepositoryJson();
 
-//using var dbContext = GetDbContext();
-//configRepo = new ConfigRepositoryEF(dbContext);
+using var dbContext = GetDbContext();
+configRepo = new ConfigRepositoryEF(dbContext);
 
 
 var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
@@ -38,8 +38,8 @@ menu0.AddMenuItem("n", "New game", () =>
     };
 
     lastController.GameLoop();
-
-    // Store game state for later saving
+    
+    // Store game state for later saving - after game saving
     var boardList = lastController.GetBoardAsList();
     lastGameConfig = new GameConfiguration()
     {
@@ -55,7 +55,6 @@ menu0.AddMenuItem("n", "New game", () =>
 });
 
 var menuConfig = new Menu("Connect4 Configurations", EMenuLevel.FirstLevel);
-
 menuConfig.AddMenuItem("l", "Load", () =>
 {
     var data = configRepo.List();

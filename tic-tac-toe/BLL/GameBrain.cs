@@ -1,4 +1,4 @@
-﻿﻿﻿namespace BLL;
+﻿namespace BLL;
 
 public class GameBrain
 {
@@ -172,5 +172,10 @@ public class GameBrain
             }
         }
         return ECellState.Empty;
+    }
+
+    public GameConfiguration GetConfiguration()
+    {
+        return GameConfiguration;
     }
 }

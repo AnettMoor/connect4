@@ -1,4 +1,4 @@
-﻿﻿using BLL;
+﻿using BLL;
 using ConsoleUI;
 
 namespace ConsoleApp;
@@ -58,6 +58,7 @@ public class GameController
             //save mid game
             if (input == "s")
             {
+                //var current = GameBrain.GetConfiguration();
                 var midGameConfig = new GameConfiguration
                 {
                     Name = "Midgame Save",

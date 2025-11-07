@@ -1,4 +1,4 @@
-﻿﻿using System.Text.Json;
+﻿using System.Text.Json;
 using BLL;
 
 using System;
@@ -86,8 +86,7 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
         var safeName = new string(data.Name.Where(c => !invalidChars.Contains(c)).ToArray());
         safeName = safeName.Replace(' ', '_').Trim();
         
-        var timeStamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        var newFileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition}_{timeStamp}.json";
+        var newFileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition}_{data.CreatedAt}.json";
         var newFullPath = Path.Combine(configDir, newFileName);
 
         // delete old file
