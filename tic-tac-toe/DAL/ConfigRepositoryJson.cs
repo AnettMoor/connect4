@@ -27,6 +27,13 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
         return res;
     }
     
+    public async Task<List<(string id, string description)>> ListAsync()
+    {
+        // TODO finish method?
+        return List();
+    }
+
+    
     public string Save(GameConfiguration data)
     {
         var jsonStr = JsonSerializer.Serialize(data);

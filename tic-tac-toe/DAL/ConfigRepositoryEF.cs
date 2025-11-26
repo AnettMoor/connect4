@@ -1,4 +1,5 @@
 ﻿using BLL;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL;
 
@@ -26,6 +27,23 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
         }
         return res;
     }
+    
+    public async Task<List<(string id, string description)>> ListAsync()
+    {
+        var res = new List<(string id, string description)>();
+        foreach (var dbConf in await _dbContext.GameConfigurations.ToListAsync())
+        {
+            res.Add(
+                (
+                    dbConf.Id.ToString(),
+                    dbConf.Name
+                )
+            );
+        }
+
+        return res;
+    }
+
 
     public string Save(GameConfiguration data)
     {

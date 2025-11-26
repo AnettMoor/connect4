@@ -6,6 +6,7 @@ namespace DAL;
 public interface IRepository<TData>
 {
     List<(string id, string description)> List();
+    Task<List<(string id, string description)>> ListAsync();
     
     //crud
     string Save(TData data);
