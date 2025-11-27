@@ -1,0 +1,56 @@
+﻿@page
+@using System.Web
+@using BLL
+@model WebApp.Pages.GamePlay
+
+<h1>GamePlay</h1>
+<div class="row">
+    <div class="col-md-8">
+        <table class="table table-bordered">
+            <tr>
+                <td>&nbsp;</td>
+                @for (int x = 0; x < Model.GameBrain.GetBoard().GetLength(0); x++)
+                {
+                    <td>@GetNumberRepresentation(x + 1)</td>
+                }
+            </tr>
+            @for (int y = 0; y < Model.GameBrain.GetBoard().GetLength(1); y++)
+            {
+                <tr>
+                    <td>@GetNumberRepresentation(y + 1)</td>
+                    @for (int x = 0; x < Model.GameBrain.GetBoard().GetLength(0); x++)
+                    {
+                        <td onclick="redirectToPage(@x,@y)" style="cursor: pointer;">@GetCellRepresentation(Model.GameBrain.GetBoard()[x, y])</td>
+                    }
+                </tr>
+            }
+        </table>
+    </div>
+</div>
+
+<script>
+    // Function to redirect to another page
+    function redirectToPage(x,y) {
+        console.log(x,y);
+        window.location.href = "?id=@Uri.EscapeDataString(Model.GameId)&x=" + x + "&y=" + y;
+    }
+</script>
+
+@functions
+{
+    private static string GetNumberRepresentation(int number)
+    {
+        return " " + (number < 10 ? "0" + number : number.ToString());
+    }
+
+    private static string GetCellRepresentation(ECellState cellValue) =>
+        cellValue switch
+        {
+            ECellState.Empty => "   ",
+            ECellState.X => " X ",
+            ECellState.O => " O ",
+            ECellState.XWin => "XXX",
+            ECellState.OWin => "OOO",
+            _ => " ? "
+        };
+}

@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BLL;
 
@@ -11,6 +10,7 @@ public class GameConfiguration : BaseEntity
     public int BoardWidth { get; set; } = 5;
     public int BoardHeight { get; set; } = 5;
     public int WinCondition { get; set; } = 4; // connect 4
+    //public string SaveId { get; set; } = "";
 
     public string CreatedAt { get; set; } = DateTime.Now.ToString("HH_mm_ddMMyyyy");
 

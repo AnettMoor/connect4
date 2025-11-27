@@ -14,10 +14,10 @@ Console.WriteLine("Hello, Connect4!");
 IRepository<GameConfiguration> configRepo;
 
 // Choose ONE!
-//configRepo = new ConfigRepositoryJson();
+configRepo = new ConfigRepositoryJson();
 
-using var dbContext = GetDbContext();
-configRepo = new ConfigRepositoryEF(dbContext);
+//using var dbContext = GetDbContext();
+//configRepo = new ConfigRepositoryEF(dbContext);
 
 
 var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
@@ -40,17 +40,9 @@ menu0.AddMenuItem("n", "New game", () =>
     lastController.GameLoop();
     
     // Store game state for later saving - after game saving
-    var boardList = lastController.GetBoardAsList();
-    lastGameConfig = new GameConfiguration()
-    {
-        Name = "Classical", 
-        Board = boardList,
-        BoardWidth = boardList.Count,
-        BoardHeight = boardList[0].Count,
-        WinCondition = 4,
-    };
+    //var boardList = lastController.GetBoardAsList(); TODO find out if you need this
+    lastGameConfig = lastController.GetConfiguration();
 
-    Console.WriteLine("Game finished. Use 'Save game' to save this board.");
     return "abc";
 });
 
@@ -150,10 +142,12 @@ menuConfig.AddMenuItem("c", "Create", () =>
 
 menuConfig.AddMenuItem("d", "Delete", () =>
 {
+    
     var data = configRepo.List();
     for (int i = 0; i < data.Count; i++)
     {
-        Console.WriteLine($"{i + 1}: {data[i]}");
+        var (id, description) = data[i];
+        Console.WriteLine($"{i + 1}: {description}");
     }
 
     Console.Write("Select config to delete, 0 to skip: ");
@@ -188,13 +182,21 @@ menu0.AddMenuItem("s", "Save game", () =>
         return "abc";
     }
 
-    Console.Write("Enter a name for this saved game: ");
-    var name = Console.ReadLine();
-    if (!string.IsNullOrWhiteSpace(name))
-        lastGameConfig.Name = name;
-
-    configRepo.Save(lastGameConfig);
-    Console.WriteLine($"Game configuration saved: {lastGameConfig.Name}");
+    if (lastController != null && !lastController.GameSaved)
+    {
+        lastController.UpdateConfigurationBoard();
+        
+        Console.Write("Enter a name for this saved game: ");
+        var name = Console.ReadLine();
+        if (!string.IsNullOrWhiteSpace(name))
+            lastGameConfig.Name = name;
+        configRepo.Save(lastGameConfig);
+        Console.WriteLine($"Game configuration saved: {lastGameConfig.Name}");
+    }
+    else
+    {
+        Console.WriteLine($"Game already saved: {lastGameConfig.Name}");
+    }
     return "abc";
 });
 

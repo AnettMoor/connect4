@@ -1,0 +1,26 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<a asp-page="./NewGame">New Game</a>
+
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Description</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var conf in Model.Configurations)
+    {
+        <tr>
+            <td>@conf.id</td>
+            <td>@conf.description</td>
+        </tr>
+    }
+    </tbody>
+</table>

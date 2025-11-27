@@ -7,6 +7,7 @@ public class GameController
 {
     private GameBrain GameBrain { get; set; }
     public Action<GameConfiguration>? OnSaveGame { get; set; }
+    public bool GameSaved {get; set;}
 
 
     public GameController()
@@ -23,7 +24,15 @@ public class GameController
     {
         return GameBrain.GetBoardAsList();
     }
-    
+    public GameConfiguration GetConfiguration()
+    {
+        return GameBrain.GetConfiguration();
+        
+    }public void UpdateConfigurationBoard()
+    {
+        GameBrain.UpdateConfigurationBoard();
+    }
+
 
     public void GameLoop()
     {
@@ -58,20 +67,10 @@ public class GameController
             //save mid game
             if (input == "s")
             {
-                //var current = GameBrain.GetConfiguration();
-                var midGameConfig = new GameConfiguration
-                {
-                    Name = "Midgame Save",
-                    Board = GameBrain.GetBoardAsList(),
-                    BoardWidth = GameBrain.GetBoard().GetLength(0),
-                    BoardHeight = GameBrain.GetBoard().GetLength(1),
-                    WinCondition = 4,
-                    CreatedAt = DateTime.Now.ToString("HH_mm_ddMMyyyy")
-                };
-
+                GameBrain.UpdateConfigurationBoard();
+                var midGameConfig = GameBrain.GetConfiguration();
                 OnSaveGame?.Invoke(midGameConfig);
-                Console.WriteLine("Game saved!");
-                Console.ReadKey();
+                GameSaved = true;
                 gameOver = true;
                 break;
             }

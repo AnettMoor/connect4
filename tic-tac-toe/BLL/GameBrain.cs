@@ -84,6 +84,47 @@ public class GameBrain
             NextMoveByX = !NextMoveByX; // switch turns
         }
     }
+    // see if move is possible
+    public MoveResult TryMakeMove(int x)
+    {
+        var result = new MoveResult();
+        
+        // check if move is in column bounds
+        if (x < 0 || x >= GameConfiguration.BoardWidth)
+        {
+            result.Success = false;
+            result.ErrorMessage = "Invalid column.";
+            return result;
+        }
+
+        // find the first empty cell in row
+        int y = -1;
+        for (int row = GameConfiguration.BoardHeight - 1; row >= 0; row--)
+        {
+            if (GameBoard[x, row] == ECellState.Empty)
+            {
+                y = row;
+                break;
+            }
+        }
+
+        if (y == -1)
+        {
+            result.Success = false;
+            result.ErrorMessage = "Column full.";
+            return result;
+        }
+        
+        ProcessMove(x, y);
+        result.Success = true;
+        result.X = x;
+        result.Y = y;
+        result.Winner = GetWinner(x, y);
+
+        return result;
+    }
+
+
 
     private (int dirX, int dirY) GetDirection(int directionIndex) =>
         directionIndex switch
@@ -178,4 +219,21 @@ public class GameBrain
     {
         return GameConfiguration;
     }
+    
+    // for saving
+    public void UpdateConfigurationBoard()
+    {
+        var boardList = new List<List<ECellState>>();
+        for (int x = 0; x < GameConfiguration.BoardWidth; x++)
+        {
+            var col = new List<ECellState>();
+            for (int y = 0; y < GameConfiguration.BoardHeight; y++)
+            {
+                col.Add(GameBoard[x, y]);
+            }
+            boardList.Add(col);
+        }
+        GameConfiguration.Board = boardList;
+    }
+
 }
