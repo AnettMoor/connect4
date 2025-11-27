@@ -24,11 +24,13 @@ public class GameController
     {
         return GameBrain.GetBoardAsList();
     }
+    
+    // TODO is there a way to use it straight up without the static warnings??
     public GameConfiguration GetConfiguration()
     {
         return GameBrain.GetConfiguration();
-        
-    }public void UpdateConfigurationBoard()
+    }
+    public void UpdateConfigurationBoard()
     {
         GameBrain.UpdateConfigurationBoard();
     }

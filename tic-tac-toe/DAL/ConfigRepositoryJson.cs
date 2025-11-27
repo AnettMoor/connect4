@@ -93,6 +93,8 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
         var safeName = new string(data.Name.Where(c => !invalidChars.Contains(c)).ToArray());
         safeName = safeName.Replace(' ', '_').Trim();
         
+        data.CreatedAt = DateTime.Now.ToString("HH_mm_ddMMyyyy");
+        
         var newFileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition}_{data.CreatedAt}.json";
         var newFullPath = Path.Combine(configDir, newFileName);
 

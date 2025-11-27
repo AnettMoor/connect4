@@ -114,7 +114,7 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
         entity.BoardWidth = data.BoardWidth;
         entity.BoardHeight = data.BoardHeight;
         entity.WinCondition = data.WinCondition;
-        entity.CreatedAt = data.CreatedAt;
+        entity.CreatedAt = DateTime.Now.ToString("HH_mm_ddMMyyyy");
         entity.Board = data.Board;
 
         _dbContext.SaveChanges();

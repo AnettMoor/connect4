@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
  
 GameController? lastController = null;
 GameConfiguration? lastGameConfig = null;
-
+string? lastLoadedFileName = null;
 
 Console.WriteLine("Hello, Connect4!");
 
@@ -14,33 +14,23 @@ Console.WriteLine("Hello, Connect4!");
 IRepository<GameConfiguration> configRepo;
 
 // Choose ONE!
-configRepo = new ConfigRepositoryJson();
+//configRepo = new ConfigRepositoryJson();
 
-//using var dbContext = GetDbContext();
-//configRepo = new ConfigRepositoryEF(dbContext);
+using var dbContext = GetDbContext();
+configRepo = new ConfigRepositoryEF(dbContext);
 
 
 var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
 menu0.AddMenuItem("n", "New game", () =>
 {
     lastController = new GameController();
-    
+    lastGameConfig = lastController.GetConfiguration();
     //mid game saving
-    lastController.OnSaveGame = (gameConfig) =>
-    {
-        Console.Write("Enter a name for this saved game: ");
-        var name = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(name))
-            gameConfig.Name = name;
-
-        configRepo.Save(gameConfig);
-        Console.WriteLine($"Game saved: {gameConfig.Name}");
-    };
-
+    midGameSave();
     lastController.GameLoop();
     
     // Store game state for later saving - after game saving
-    //var boardList = lastController.GetBoardAsList(); TODO find out if you need this
+    var boardList = lastController.GetBoardAsList();
     lastGameConfig = lastController.GetConfiguration();
 
     return "abc";
@@ -68,7 +58,7 @@ menuConfig.AddMenuItem("l", "Load", () =>
 
     var selectedId = data[userChoice - 1].id;
     var gameConfig = configRepo.Load(selectedId);
-
+    
     // Convert saved board list to 2D array if it exists
     ECellState[,] loadedBoard = new ECellState[gameConfig.BoardWidth, gameConfig.BoardHeight];
     if (gameConfig.Board != null)
@@ -80,9 +70,13 @@ menuConfig.AddMenuItem("l", "Load", () =>
 
     // Start the game with the loaded configuration
     lastController = new GameController(gameConfig, "Player 1", "Player 2", loadedBoard);
+    lastGameConfig = gameConfig;
+    lastLoadedFileName = selectedId;
+    
+    midGameSave();
     lastController.GameLoop();
-
-    return "abc";
+    
+    return "m";
 });
 
 
@@ -227,4 +221,41 @@ AppDbContext GetDbContext()
     dbContext.Database.Migrate();
     
     return dbContext;
+}
+
+
+void midGameSave()
+{
+    if (lastController == null) return; // only check controller
+
+    lastController.OnSaveGame = (gameConfig) =>
+    {
+        lastController.UpdateConfigurationBoard(); // sync board
+
+        // give new games name
+        if (string.IsNullOrWhiteSpace(gameConfig.Name))
+        {
+            Console.Write("Enter a name for this saved game: ");
+            var name = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(name))
+                gameConfig.Name = name;
+        }
+
+        if (!string.IsNullOrWhiteSpace(lastLoadedFileName))
+        {
+            // Override loaded game
+            configRepo.Update(gameConfig, lastLoadedFileName);
+            Console.WriteLine($"Loaded game overridden: {gameConfig.Name}");
+        }
+        else
+        {
+            // New game save
+            configRepo.Save(gameConfig);
+            Console.WriteLine($"Game saved: {gameConfig.Name}");
+        }
+
+        lastGameConfig = gameConfig; // now we can store it
+    };
+
+
 }
