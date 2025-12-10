@@ -22,7 +22,8 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
             res.Add(
                 (
                     dbConf.Id.ToString(),
-                    $"{dbConf.Name} ({dbConf.CreatedAt})"
+                    $"{dbConf.Name} - {dbConf.BoardWidth}x{dbConf.BoardHeight} - win_{dbConf.WinCondition} - {dbConf.CreatedAt}"
+            
                 )
             );
         }

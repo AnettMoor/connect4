@@ -14,10 +14,10 @@ Console.WriteLine("Hello, Connect4!");
 IRepository<GameConfiguration> configRepo;
 
 // Choose ONE!
-configRepo = new ConfigRepositoryJson();
+//configRepo = new ConfigRepositoryJson();
 
-//using var dbContext = GetDbContext();
-//configRepo = new ConfigRepositoryEF(dbContext);
+using var dbContext = GetDbContext();
+configRepo = new ConfigRepositoryEF(dbContext);
 
 
 var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
@@ -202,42 +202,43 @@ menu0.AddMenuItem("s", "Save game", () =>
 
 void PrecreatedConfigs()
 {
-    var existingConfigs = configRepo.List();
+    bool NameExists(string name)
+    {
+        var existingConfigs = configRepo.List();
+        return existingConfigs.Any(c =>
+        {
+            // Name - widthxheight - win_X - createdat
+            var parts = c.description.Split(" - ", StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length > 0 && parts[0] == name;
+        });
+    }
+
     void AddOrFixConfig(string name, int width, int height, int winCondition)
     {
-        var existingEntity = dbContext.GameConfigurations
-            .FirstOrDefault(c => c.Name == name);
+        if (NameExists(name))
+            return; 
 
-        GameConfiguration config;
-
-        if (existingEntity != null)
+        // if config not existing
+        // Create new configuration
+        var config = new GameConfiguration
         {
-            // load and update for existing boards
-            config = configRepo.Load(existingEntity.Id.ToString());
-            configRepo.Update(config, existingEntity.Id.ToString());
-        }
-        else
-        {
-            // Create and save
-            config = new GameConfiguration
-            {
-                Name = name,
-                BoardWidth = width,
-                BoardHeight = height,
-                WinCondition = winCondition
-            };
+            Name = name,
+            BoardWidth = width,
+            BoardHeight = height,
+            WinCondition = winCondition,
+            Board = new List<List<ECellState>>()
+        };
 
-            // Initialize empty board
-            config.Board = new List<List<ECellState>>();
-            for (int x = 0; x < config.BoardWidth; x++)
-            {
-                config.Board.Add(new List<ECellState>());
-                while (config.Board[x].Count < config.BoardHeight)
-                    config.Board[x].Add(ECellState.Empty);
-            }
-            // save if not existing already
-            configRepo.Save(config);
+        // Initialize empty board
+        for (int x = 0; x < config.BoardWidth; x++)
+        {
+            var col = new List<ECellState>();
+            for (int y = 0; y < config.BoardHeight; y++)
+                col.Add(ECellState.Empty);
+            config.Board.Add(col);
         }
+        // save if not existing already
+        configRepo.Save(config);
     }
     AddOrFixConfig("Classical Connect4", 4, 4, 4);
     AddOrFixConfig("Connect3", 5, 5, 3);
