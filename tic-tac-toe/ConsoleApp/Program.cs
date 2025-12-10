@@ -59,34 +59,7 @@ menuConfig.AddMenuItem("l", "Load", () =>
     var selectedId = data[userChoice - 1].id;
     var gameConfig = configRepo.Load(selectedId);
     
-    // Convert saved board list to list of lists if it exists
-    List<List<ECellState>> loadedBoard = new List<List<ECellState>>();
-    
-    for (int x = 0; x < gameConfig.BoardWidth; x++)
-    {
-        List<ECellState> col = new List<ECellState>();
-
-        if (gameConfig.Board != null && x < gameConfig.Board.Count)
-        {
-            // copy existing rows
-            col.AddRange(gameConfig.Board[x]);
-
-            // fill missing rows
-            while (col.Count < gameConfig.BoardHeight)
-                col.Add(ECellState.Empty);
-        }
-        else
-        {
-            // create empty column
-            for (int y = 0; y < gameConfig.BoardHeight; y++)
-                col.Add(ECellState.Empty);
-        }
-
-        loadedBoard.Add(col);
-    }
-
-// now create GameController safely
-    lastController = new GameController(gameConfig, "Player 1", "Player 2", loadedBoard);
+    lastController = new GameController(gameConfig, "Player 1", "Player 2", gameConfig.Board);
 
     lastGameConfig = gameConfig;
     lastLoadedFileName = selectedId;
