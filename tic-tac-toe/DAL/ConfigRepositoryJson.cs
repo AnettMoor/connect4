@@ -18,9 +18,14 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
         {  
             var fileName = Path.GetFileName(fullFileName);
             if (!fileName.EndsWith(".json")) continue;
+            
+            var jsonText = File.ReadAllText(fullFileName);
+            var conf = JsonSerializer.Deserialize<GameConfiguration>(jsonText);
+            if (conf == null) continue;
+            
             res.Add(
-                (Path.GetFileName(fileName),
-            Path.GetFileNameWithoutExtension(fileName))
+                (fileName,
+                    $"{conf.Name} - {conf.BoardWidth}x{conf.BoardHeight} - win_{conf.WinCondition} - {conf.CreatedAt}")
             );
         }
 
@@ -29,8 +34,28 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
     
     public async Task<List<(string id, string description)>> ListAsync()
     {
-        // TODO finish method?
-        return List();
+        var dir = FilesystemHelpers.GetConfigDirectory(); 
+        var res = new List<(string id, string description)>();
+
+        await Task.Run(() =>
+        {
+            foreach (var fullFileName in Directory.EnumerateFiles(dir))
+            {  
+                var fileName = Path.GetFileName(fullFileName);
+                if (!fileName.EndsWith(".json")) continue;
+                
+                var jsonText = File.ReadAllText(fullFileName);
+                var conf = JsonSerializer.Deserialize<GameConfiguration>(jsonText);
+                if (conf == null) continue;
+            
+                res.Add(
+                    (fileName,
+                        $"{conf.Name} - {conf.BoardWidth}x{conf.BoardHeight} - win_{conf.WinCondition} - {conf.CreatedAt}")
+                );
+            }
+        });
+
+        return res;
     }
 
     
@@ -95,7 +120,7 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
         
         data.CreatedAt = DateTime.Now.ToString("HH_mm_ddMMyyyy");
         
-        var newFileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition}_{data.CreatedAt}.json";
+        var newFileName = $"{safeName} - {data.BoardWidth}x{data.BoardHeight} - win_{data.WinCondition} - {data.CreatedAt}.json";
         var newFullPath = Path.Combine(configDir, newFileName);
 
         // delete old file

@@ -113,7 +113,7 @@ menuConfig.AddMenuItem("e", "Edit", () =>
     }
 });
 
-menuConfig.AddMenuItem("c", "Create Custom", () =>
+menuConfig.AddMenuItem("c", "Create", () =>
 {
     var newConfig = new GameConfiguration();
     Console.Write("Enter new name: ");
@@ -162,9 +162,10 @@ menuConfig.AddMenuItem("d", "Delete", () =>
         return "abc";
     }
 
-    var selectedConfig = data[userChoice - 1];
-    configRepo.Delete(selectedConfig.id);
-    Console.WriteLine($"Deleted: {selectedConfig}");
+    var (selectedId, selectedDescription) = data[userChoice - 1]; // ignoreId for print
+    
+    configRepo.Delete(selectedId);
+    Console.WriteLine($"Deleted: {selectedDescription}");
 
     return "abc";
 });
@@ -180,21 +181,31 @@ menu0.AddMenuItem("s", "Save game", () =>
         return "abc";
     }
 
-    if (lastController != null && !lastController.GameSaved)
+    lastController?.UpdateConfigurationBoard();
+
+    // Check if config already exists in DB
+    var allConfigs = configRepo.List();
+    bool existsInDb = allConfigs.Any(c => c.id == lastGameConfig.Id.ToString());
+
+    if (existsInDb &&
+    lastGameConfig.Name != "Classical Connect4" &&
+        lastGameConfig.Name != "Connect3" && 
+        lastGameConfig.Name != "Connect5$")
     {
-        lastController.UpdateConfigurationBoard();
-        
-        Console.Write("Enter a name for this saved game: ");
-        var name = Console.ReadLine();
-        if (!string.IsNullOrWhiteSpace(name))
-            lastGameConfig.Name = name;
-        configRepo.Save(lastGameConfig);
-        Console.WriteLine($"Game configuration saved: {lastGameConfig.Name}");
+        // if game already exists, update
+        configRepo.Update(lastGameConfig, lastGameConfig.Id.ToString());
+        Console.WriteLine($"Game configuration updated: {lastGameConfig.Name}");
     }
     else
     {
-        Console.WriteLine($"Game already saved: {lastGameConfig.Name}");
+        // New saves and premade config plays
+        lastGameConfig.Id = Guid.NewGuid();
+        Console.Write("Enter name for the game: ");
+        lastGameConfig.Name = Console.ReadLine();
+        configRepo.Save(lastGameConfig);
+        Console.WriteLine($"Game configuration saved: {lastGameConfig.Name}");
     }
+
     return "abc";
 });
 
@@ -222,6 +233,7 @@ void PrecreatedConfigs()
         // Create new configuration
         var config = new GameConfiguration
         {
+            Id = Guid.NewGuid(),
             Name = name,
             BoardWidth = width,
             BoardHeight = height,
@@ -244,7 +256,6 @@ void PrecreatedConfigs()
     AddOrFixConfig("Connect3", 5, 5, 3);
     AddOrFixConfig("Connect5", 7, 7, 5);
 }
-
 
 PrecreatedConfigs();
 menu0.Run();
@@ -278,14 +289,13 @@ AppDbContext GetDbContext()
 
 
 void midGameSave()
-{
-    if (lastController == null) return; // only check controller
+{ 
+    if (lastController == null) return;
 
     lastController.OnSaveGame = (gameConfig) =>
     {
         lastController.UpdateConfigurationBoard();
-
-        // give new games name
+        
         if (string.IsNullOrWhiteSpace(gameConfig.Name))
         {
             Console.Write("Enter a name for this saved game: ");
@@ -293,30 +303,25 @@ void midGameSave()
             if (!string.IsNullOrWhiteSpace(name))
                 gameConfig.Name = name;
         }
-        
-        bool dbGameExists = false;
-        if (!string.IsNullOrWhiteSpace(lastLoadedFileName))
-        {
-            // Check if ID exists in DB before updating
-            var allConfigs = configRepo.List();
-            dbGameExists = allConfigs.Any(c => c.id == lastLoadedFileName);
-        }
 
-        if (dbGameExists)
+        var allConfigs = configRepo.List();
+        bool exists = allConfigs.Any(c => c.id == gameConfig.Id.ToString());
+
+        // update existing config
+        if (exists && gameConfig.Name != "Classical Connect4" && gameConfig.Name != "Connect3" && gameConfig.Name != "Connect5")
         {
-            
-            Console.Write("Enter new name: ");
-            gameConfig.Name = Console.ReadLine();
-            configRepo.Update(gameConfig, lastLoadedFileName);
-            Console.WriteLine($"Loaded game overridden: {gameConfig.Name}");
+            configRepo.Update(gameConfig, gameConfig.Id.ToString());
+            Console.WriteLine($"Game updated: {gameConfig.Name}");
         }
+            // game not existing before - create new save
         else
         {
+            gameConfig.Id = Guid.NewGuid();
             configRepo.Save(gameConfig);
             Console.WriteLine($"Game saved: {gameConfig.Name}");
-            lastLoadedFileName = null;
         }
 
+        lastLoadedFileName = gameConfig.Id.ToString();
         lastGameConfig = gameConfig;
     };
 }

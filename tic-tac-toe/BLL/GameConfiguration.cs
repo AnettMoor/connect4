@@ -11,7 +11,7 @@ public class GameConfiguration : BaseEntity
     public int WinCondition { get; set; } = 4; // connect 4
 
     public string CreatedAt { get; set; } = DateTime.Now.ToString("HH_mm_ddMMyyyy");
-
+    
     
     // functions for save
     [NotMapped] // do not create a database column, im storing a serialized board in database, not this one
