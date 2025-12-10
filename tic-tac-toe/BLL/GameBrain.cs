@@ -21,20 +21,22 @@ public class GameBrain
     }
     
     
-    public GameBrain(GameConfiguration configuration, string player1Name, string player2Name, ECellState[,]? existingBoard = null)
+    public GameBrain(GameConfiguration configuration, string player1Name, string player2Name, List<List<ECellState>>? existingBoard = null)
     {
         GameConfiguration = configuration;
         Player1Name = player1Name;
         Player2Name = player2Name;
-
         
         // for loading existing configs
-        if (existingBoard != null)
+        if (existingBoard != null && 
+            existingBoard.Count == configuration.BoardWidth &&
+            existingBoard.All(col => col.Count == configuration.BoardHeight))
         {
-            GameBoard = configuration.Board
+            GameBoard = existingBoard
                 .Select(col => new List<ECellState>(col))
                 .ToList();
         }
+        // create empty board
         else
         {
             GameBoard = new List<List<ECellState>>();
@@ -61,6 +63,7 @@ public class GameBrain
             NextMoveByX = !NextMoveByX; // switch turns
         }
     }
+    
     // see if move is possible
     public MoveResult TryMakeMove(int x)
     {
@@ -212,5 +215,4 @@ public class GameBrain
         }
         GameConfiguration.Board = boardList;
     }
-
 }

@@ -21,7 +21,7 @@ configRepo = new ConfigRepositoryEF(dbContext);
 
 
 var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
-menu0.AddMenuItem("n", "New game", () =>
+menu0.AddMenuItem("n", "New game (Classic)", () =>
 {
     lastController = new GameController();
     lastGameConfig = lastController.GetConfiguration();
@@ -34,6 +34,7 @@ menu0.AddMenuItem("n", "New game", () =>
 
     return "abc";
 });
+
 
 var menuConfig = new Menu("Connect4 Configurations", EMenuLevel.FirstLevel);
 menuConfig.AddMenuItem("l", "Load", () =>
@@ -58,17 +59,35 @@ menuConfig.AddMenuItem("l", "Load", () =>
     var selectedId = data[userChoice - 1].id;
     var gameConfig = configRepo.Load(selectedId);
     
-    // Convert saved board list to 2D array if it exists
-    ECellState[,] loadedBoard = new ECellState[gameConfig.BoardWidth, gameConfig.BoardHeight];
-    if (gameConfig.Board != null)
+    // Convert saved board list to list of lists if it exists
+    List<List<ECellState>> loadedBoard = new List<List<ECellState>>();
+    
+    for (int x = 0; x < gameConfig.BoardWidth; x++)
     {
-        for (int x = 0; x < gameConfig.BoardWidth; x++)
-        for (int y = 0; y < gameConfig.BoardHeight; y++)
-            loadedBoard[x, y] = gameConfig.Board[x][y];
+        List<ECellState> col = new List<ECellState>();
+
+        if (gameConfig.Board != null && x < gameConfig.Board.Count)
+        {
+            // copy existing rows
+            col.AddRange(gameConfig.Board[x]);
+
+            // fill missing rows
+            while (col.Count < gameConfig.BoardHeight)
+                col.Add(ECellState.Empty);
+        }
+        else
+        {
+            // create empty column
+            for (int y = 0; y < gameConfig.BoardHeight; y++)
+                col.Add(ECellState.Empty);
+        }
+
+        loadedBoard.Add(col);
     }
 
-    // Start the game with the loaded configuration
+// now create GameController safely
     lastController = new GameController(gameConfig, "Player 1", "Player 2", loadedBoard);
+
     lastGameConfig = gameConfig;
     lastLoadedFileName = selectedId;
     
@@ -110,12 +129,8 @@ menuConfig.AddMenuItem("e", "Edit", () =>
         // user modifications
         Console.Write("Enter new name: ");
         gameConfig.Name = Console.ReadLine();
-
-        Console.Write("Enter new board width: ");
-        gameConfig.BoardWidth = int.Parse(Console.ReadLine());
-
-        Console.Write("Enter new board height: ");
-        gameConfig.BoardHeight = int.Parse(Console.ReadLine());
+        gameConfig.BoardWidth = ReadInt("Enter new board width: ");
+        gameConfig.BoardHeight = ReadInt("Enter new board height: ");
 
         // save new name
         var newFileName = configRepo.Update(gameConfig, selectedConfig.id);
@@ -125,11 +140,28 @@ menuConfig.AddMenuItem("e", "Edit", () =>
     }
 });
 
-menuConfig.AddMenuItem("c", "Create", () =>
+menuConfig.AddMenuItem("c", "Create Custom", () =>
 {
-    var newConfig = new GameConfiguration() { Name = "Classical" };
+    var newConfig = new GameConfiguration();
+    Console.Write("Enter new name: ");
+    newConfig.Name = Console.ReadLine();
+
+    newConfig.BoardWidth = ReadInt("Enter new board width: ");
+    newConfig.BoardHeight = ReadInt("Enter new board height: ");
+    newConfig.WinCondition = ReadInt("Win Condition: ");
+
+    newConfig.Board = null;
+    
     configRepo.Save(newConfig);
     Console.WriteLine($"New configuration created: {newConfig.Name}");
+    
+    lastController = new GameController(newConfig, "Player 1", "Player 2");
+    lastGameConfig = newConfig;
+    lastLoadedFileName = null; // new config, not loaded from DB
+    
+    midGameSave();
+    
+    lastController.GameLoop();
     return "abc";
 });
 
@@ -194,7 +226,55 @@ menu0.AddMenuItem("s", "Save game", () =>
 });
 
 
+
+void PrecreatedConfigs()
+{
+    var existingConfigs = configRepo.List();
+    void AddOrFixConfig(string name, int width, int height, int winCondition)
+    {
+        var existingEntity = dbContext.GameConfigurations
+            .FirstOrDefault(c => c.Name == name);
+
+        GameConfiguration config;
+
+        if (existingEntity != null)
+        {
+            // load and update for existing boards
+            config = configRepo.Load(existingEntity.Id.ToString());
+            configRepo.Update(config, existingEntity.Id.ToString());
+        }
+        else
+        {
+            // Create and save
+            config = new GameConfiguration
+            {
+                Name = name,
+                BoardWidth = width,
+                BoardHeight = height,
+                WinCondition = winCondition
+            };
+
+            // Initialize empty board
+            config.Board = new List<List<ECellState>>();
+            for (int x = 0; x < config.BoardWidth; x++)
+            {
+                config.Board.Add(new List<ECellState>());
+                while (config.Board[x].Count < config.BoardHeight)
+                    config.Board[x].Add(ECellState.Empty);
+            }
+            // save if not existing already
+            configRepo.Save(config);
+        }
+    }
+    AddOrFixConfig("Classical Connect4", 4, 4, 4);
+    AddOrFixConfig("Connect3", 5, 5, 3);
+    AddOrFixConfig("Connect5", 7, 7, 5);
+}
+
+
+PrecreatedConfigs();
 menu0.Run();
+
 
 Console.WriteLine("We are DONE.......");
 
@@ -229,7 +309,7 @@ void midGameSave()
 
     lastController.OnSaveGame = (gameConfig) =>
     {
-        lastController.UpdateConfigurationBoard(); // sync board
+        lastController.UpdateConfigurationBoard();
 
         // give new games name
         if (string.IsNullOrWhiteSpace(gameConfig.Name))
@@ -239,22 +319,43 @@ void midGameSave()
             if (!string.IsNullOrWhiteSpace(name))
                 gameConfig.Name = name;
         }
-
+        
+        bool dbGameExists = false;
         if (!string.IsNullOrWhiteSpace(lastLoadedFileName))
         {
-            // Override loaded game
+            // Check if ID exists in DB before updating
+            var allConfigs = configRepo.List();
+            dbGameExists = allConfigs.Any(c => c.id == lastLoadedFileName);
+        }
+
+        if (dbGameExists)
+        {
             configRepo.Update(gameConfig, lastLoadedFileName);
             Console.WriteLine($"Loaded game overridden: {gameConfig.Name}");
         }
         else
         {
-            // New game save
             configRepo.Save(gameConfig);
             Console.WriteLine($"Game saved: {gameConfig.Name}");
+            lastLoadedFileName = null;
         }
 
-        lastGameConfig = gameConfig; // now we can store it
+        lastGameConfig = gameConfig;
     };
-
-
 }
+
+int ReadInt(string message)
+    {
+        int value;
+        while (true)
+        {
+            Console.Write(message);
+            var input = Console.ReadLine();
+
+            if (int.TryParse(input, out value) && value > 0)
+                return value;
+
+            Console.WriteLine("Invalid number. Please enter a positive number.");
+        }
+    }
+

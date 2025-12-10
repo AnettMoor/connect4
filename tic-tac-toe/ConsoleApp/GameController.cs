@@ -15,7 +15,7 @@ public class GameController
         GameBrain = new GameBrain(new GameConfiguration(), "Player 1", "Player 2");
     }
 
-    public GameController(GameConfiguration configuration, string player1, string player2, ECellState[,]? board = null)
+    public GameController(GameConfiguration configuration, string player1, string player2, List<List<ECellState>>? board = null)
     {
         GameBrain = new GameBrain(configuration, player1, player2, board);
     }
