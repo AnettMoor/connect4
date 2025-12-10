@@ -1,4 +1,5 @@
-﻿using BLL;
+﻿using System.Text.Json;
+using BLL;
 using Microsoft.EntityFrameworkCore;
 
 namespace DAL;
@@ -47,19 +48,12 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
 
     public string Save(GameConfiguration data)
     {
-        var newEntity = new GameConfiguration
-        {
-            Id = Guid.NewGuid(),
-            Name = data.Name,
-            BoardWidth = data.BoardWidth,
-            BoardHeight = data.BoardHeight,
-            WinCondition = data.WinCondition,
-            CreatedAt = data.CreatedAt,
-            Board = data.Board,
-        };
-        _dbContext.GameConfigurations.Add(newEntity);
-        data.Id = newEntity.Id;
+        data.BoardData = data.Board == null ? null : JsonSerializer.Serialize(data.Board);
         
+        if (data.Id == Guid.Empty)
+            data.Id = Guid.NewGuid();
+        
+        _dbContext.GameConfigurations.Add(data);
         _dbContext.SaveChanges();
         
         return data.Id.ToString();
@@ -75,18 +69,9 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
         if (entity == null)
             throw new KeyNotFoundException($"No configuration found with ID {id}");
 
-        var conf = new GameConfiguration
-        {
-            Id = entity.Id,
-            Name = entity.Name,
-            BoardWidth = entity.BoardWidth,
-            BoardHeight = entity.BoardHeight,
-            WinCondition = entity.WinCondition,
-            CreatedAt = entity.CreatedAt,
-            Board = entity.Board,
-            
-        };
-        return conf;
+        if (!string.IsNullOrEmpty(entity.BoardData))
+            entity.Board = JsonSerializer.Deserialize<List<List<ECellState>>>(entity.BoardData);
+        return entity;
     }
 
     public void Delete(string id)
@@ -110,12 +95,8 @@ public class ConfigRepositoryEF : IRepository<GameConfiguration>
         if (entity == null)
             throw new KeyNotFoundException($"No configuration found with ID {data.Id}");
         
-        entity.Name = data.Name;
-        entity.BoardWidth = data.BoardWidth;
-        entity.BoardHeight = data.BoardHeight;
-        entity.WinCondition = data.WinCondition;
+        entity.BoardData = data.Board == null ? null : JsonSerializer.Serialize(data.Board);
         entity.CreatedAt = DateTime.Now.ToString("HH_mm_ddMMyyyy");
-        entity.Board = data.Board;
 
         _dbContext.SaveChanges();
 

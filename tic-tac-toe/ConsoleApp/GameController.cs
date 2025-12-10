@@ -19,11 +19,6 @@ public class GameController
     {
         GameBrain = new GameBrain(configuration, player1, player2, board);
     }
-
-    public List<List<ECellState>> GetBoardAsList()
-    {
-        return GameBrain.GetBoardAsList();
-    }
     
     // TODO is there a way to use it straight up without the static warnings??
     public GameConfiguration GetConfiguration()
@@ -42,7 +37,7 @@ public class GameController
         if (GameBrain.IsGameOver())
         {
             Console.Clear();
-            Ui.DrawBoard(GameBrain.GetBoard());
+            Ui.DrawBoard(GameBrain.GameBoard);
             Console.WriteLine("This game has already ended! No more moves allowed.");
             return;
         }
@@ -97,9 +92,9 @@ public class GameController
 
             // find first available row (y)
             int y = -1;
-            for (var row = GameBrain.GetBoard().GetLength(1) - 1; row >= 0; row--)
+            for (var row = GameBrain.GetBoard().Count - 1; row >= 0; row--)
             {
-                if (GameBrain.GetBoard()[x, row] == ECellState.Empty)
+                if (GameBrain.GetBoard()[x][row] == ECellState.Empty)
                 {
                     y = row;
                     break;

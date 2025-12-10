@@ -30,7 +30,6 @@ menu0.AddMenuItem("n", "New game", () =>
     lastController.GameLoop();
     
     // Store game state for later saving - after game saving
-    var boardList = lastController.GetBoardAsList();
     lastGameConfig = lastController.GetConfiguration();
 
     return "abc";

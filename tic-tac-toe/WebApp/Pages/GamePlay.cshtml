@@ -9,18 +9,18 @@
         <table class="table table-bordered">
             <tr>
                 <td>&nbsp;</td>
-                @for (int x = 0; x < Model.GameBrain.GetBoard().GetLength(0); x++)
+                @for (int x = 0; x < Model.GameBrain.GetBoard().Count; x++)
                 {
                     <td>@GetNumberRepresentation(x + 1)</td>
                 }
             </tr>
-            @for (int y = 0; y < Model.GameBrain.GetBoard().GetLength(1); y++)
+            @for (int y = 0; y < Model.GameBrain.GetBoard().Count; y++)
             {
                 <tr>
                     <td>@GetNumberRepresentation(y + 1)</td>
-                    @for (int x = 0; x < Model.GameBrain.GetBoard().GetLength(0); x++)
+                    @for (int x = 0; x < Model.GameBrain.GetBoard().Count; x++)
                     {
-                        <td onclick="redirectToPage(@x,@y)" style="cursor: pointer;">@GetCellRepresentation(Model.GameBrain.GetBoard()[x, y])</td>
+                        <td onclick="redirectToPage(@x,@y)" style="cursor: pointer;">@GetCellRepresentation(Model.GameBrain.GetBoard()[x][y])</td>
                     }
                 </tr>
             }

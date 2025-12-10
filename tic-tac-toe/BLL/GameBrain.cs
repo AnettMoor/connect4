@@ -2,7 +2,7 @@
 
 public class GameBrain
 {
-    private ECellState[,] GameBoard { get; set; }
+    public List<List<ECellState>> GameBoard { get; set; }
     private GameConfiguration GameConfiguration { get; set; }
     private string Player1Name { get; set; }
     private string Player2Name { get; set; }
@@ -19,22 +19,7 @@ public class GameBrain
                 return true;
         return false;
     }
-
-    public List<List<ECellState>> GetBoardAsList()
-    {
-        var boardList = new List<List<ECellState>>();
-        for (int x = 0; x < GameConfiguration.BoardWidth; x++)
-        {
-            var col = new List<ECellState>();
-            for (int y = 0; y < GameConfiguration.BoardHeight; y++)
-            {
-                col.Add(GameBoard[x, y]);
-            }
-            boardList.Add(col);
-        }
-        return boardList;
-    }
-
+    
     
     public GameBrain(GameConfiguration configuration, string player1Name, string player2Name, ECellState[,]? existingBoard = null)
     {
@@ -46,41 +31,33 @@ public class GameBrain
         // for loading existing configs
         if (existingBoard != null)
         {
-            GameBoard = existingBoard;
+            GameBoard = configuration.Board
+                .Select(col => new List<ECellState>(col))
+                .ToList();
         }
-        else if (configuration.Board != null)
-        {
-            GameBoard = new ECellState[configuration.BoardWidth, configuration.BoardHeight];
-            for (int x = 0; x < configuration.BoardWidth; x++)
-            {
-                for (int y = 0; y < configuration.BoardHeight; y++)
-                {
-                    GameBoard[x, y] = configuration.Board[x][y];
-                }
-            }
-        }
-        // create new board
         else
         {
-            GameBoard = new ECellState[configuration.BoardWidth, configuration.BoardHeight];
+            GameBoard = new List<List<ECellState>>();
+            for (int x = 0; x < configuration.BoardWidth; x++)
+            {
+                var col = new List<ECellState>();
+                for (int y = 0; y < configuration.BoardHeight; y++)
+                    col.Add(ECellState.Empty);
+                GameBoard.Add(col);
+            }
         }
     }
 
-    public ECellState[,] GetBoard()
-    {
-        var gameBoardCopy = new ECellState[GameConfiguration.BoardWidth, GameConfiguration.BoardHeight];
-        Array.Copy(GameBoard, gameBoardCopy, GameBoard.Length);
-        return gameBoardCopy;
-    }
+    public List<List<ECellState>> GetBoard() => GameBoard;
 
     public bool IsNextPlayerX() => NextMoveByX;
 
 
     public void ProcessMove(int x, int y)
     {
-        if (GameBoard[x, y] == ECellState.Empty)
+        if (GameBoard[x][y] == ECellState.Empty)
         {
-            GameBoard[x, y] = NextMoveByX ? ECellState.X : ECellState.O; // place the correct symbol
+            GameBoard[x][y] = NextMoveByX ? ECellState.X : ECellState.O; // place the correct symbol
             NextMoveByX = !NextMoveByX; // switch turns
         }
     }
@@ -101,7 +78,7 @@ public class GameBrain
         int y = -1;
         for (int row = GameConfiguration.BoardHeight - 1; row >= 0; row--)
         {
-            if (GameBoard[x, row] == ECellState.Empty)
+            if (GameBoard[x][row] == ECellState.Empty)
             {
                 y = row;
                 break;
@@ -163,7 +140,7 @@ public class GameBrain
 
     public ECellState GetWinner(int x, int y)
     {
-        if (GameBoard[x, y] == ECellState.Empty) return ECellState.Empty; // if cell is empty, there cannot be a winner 
+        if (GameBoard[x][y] == ECellState.Empty) return ECellState.Empty; // if cell is empty, there cannot be a winner 
         
         // go through all directions (horizontal, vertical, diagonal)
         for (int directionIndex = 0; directionIndex < 4; directionIndex++) 
@@ -176,7 +153,7 @@ public class GameBrain
             
             // check one direction forward
             while (BoardCoordinatesAreValid(nextX, nextY) &&
-                   GameBoard[x, y] == GameBoard[nextX, nextY] &&
+                   GameBoard[x][y] == GameBoard[nextX][nextY] &&
                    count <= GameConfiguration.WinCondition)
             {
                 count++;
@@ -197,7 +174,7 @@ public class GameBrain
                 (nextX, nextY) = Wrapping(nextX, nextY, dirX, dirY);
 
                 while (BoardCoordinatesAreValid(nextX, nextY) &&
-                       GameBoard[x, y] == GameBoard[nextX, nextY] &&
+                       GameBoard[x][y] == GameBoard[nextX][nextY] &&
                        count <= GameConfiguration.WinCondition)
                 {
                     count++;
@@ -209,7 +186,7 @@ public class GameBrain
             }
             if (count == GameConfiguration.WinCondition)
             {
-                return GameBoard[x, y] == ECellState.X ? ECellState.XWin : ECellState.OWin;
+                return GameBoard[x][y] == ECellState.X ? ECellState.XWin : ECellState.OWin;
             }
         }
         return ECellState.Empty;
@@ -229,7 +206,7 @@ public class GameBrain
             var col = new List<ECellState>();
             for (int y = 0; y < GameConfiguration.BoardHeight; y++)
             {
-                col.Add(GameBoard[x, y]);
+                col.Add(GameBoard[x][y]);
             }
             boardList.Add(col);
         }

@@ -10,12 +10,12 @@ public static class Ui
         Console.WriteLine("Next Player: " + (isNextPlayerX ? "X" : "O"));
     }
 
-    public static void DrawBoard(ECellState[,] gameBoard)
+    public static void DrawBoard(List<List<ECellState>> gameBoard)
     {
         // write column numbers
         Console.Write("    ");
         Console.Write("   "); //cylindrical
-        for (int x = 0; x < gameBoard.GetLength(0); x++)
+        for (int x = 0; x < gameBoard.Count; x++)
         {
             Console.Write("|");
             Console.ForegroundColor = ConsoleColor.DarkBlue;
@@ -27,7 +27,7 @@ public static class Ui
 
         
         // write cells
-        for (int y = 0; y < gameBoard.GetLength(1); y++)
+        for (int y = 0; y < gameBoard.Count; y++)
         {
             // CELL LINES/OUTSIDES
             // number column lines
@@ -40,7 +40,7 @@ public static class Ui
             Console.Write("+");
             
             // main board lines
-            for (int x = 1; x < gameBoard.GetLength(0) + 1; x++)
+            for (int x = 1; x < gameBoard.Count + 1; x++)
             {
                 Console.Write("---+");
             }
@@ -60,20 +60,20 @@ public static class Ui
             // left cylinder cells
             Console.Write("|");
             Console.ForegroundColor = ConsoleColor.DarkMagenta;
-            Console.Write(GetCellRepresentation(gameBoard[gameBoard.GetLength(0) - 1, y]));
+            Console.Write(GetCellRepresentation(gameBoard[gameBoard.Count - 1] [y]));
             Console.ResetColor();
             
             // mark x o main
-            for (int x = 0; x < gameBoard.GetLength(0); x++)
-                if (x == gameBoard.GetLength(0) - 1)
+            for (int x = 0; x < gameBoard.Count; x++)
+                if (x == gameBoard.Count - 1)
                 {
-                    Console.Write("|" + GetCellRepresentation(gameBoard[x, y]) + "|");
+                    Console.Write("|" + GetCellRepresentation(gameBoard[x][y]) + "|");
                 }
-                else Console.Write("|" + GetCellRepresentation(gameBoard[x, y]));
+                else Console.Write("|" + GetCellRepresentation(gameBoard[x][y]));
 
             // right cylinder cells
             Console.ForegroundColor = ConsoleColor.DarkMagenta;
-            Console.Write(GetCellRepresentation(gameBoard[0, y]));;
+            Console.Write(GetCellRepresentation(gameBoard[0][y]));;
             Console.ResetColor();
             
             Console.WriteLine();
