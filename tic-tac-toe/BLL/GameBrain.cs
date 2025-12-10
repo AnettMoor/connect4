@@ -4,10 +4,10 @@ public class GameBrain
 {
     public List<List<ECellState>> GameBoard { get; set; }
     private GameConfiguration GameConfiguration { get; set; }
-    private string Player1Name { get; set; }
-    private string Player2Name { get; set; }
+    public string Player1Name { get; set; }
+    public string Player2Name { get; set; }
 
-    private bool NextMoveByX { get; set; } = true;
+    public bool NextMoveByX { get; set; } = true;
     
     
     // for load

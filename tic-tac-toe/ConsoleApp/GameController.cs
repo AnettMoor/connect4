@@ -5,7 +5,7 @@ namespace ConsoleApp;
 
 public class GameController
 {
-    private GameBrain GameBrain { get; set; }
+    public GameBrain GameBrain { get; set; }
     public Action<GameConfiguration>? OnSaveGame { get; set; }
     public bool GameSaved {get; set;}
 

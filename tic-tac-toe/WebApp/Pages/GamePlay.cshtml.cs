@@ -1,6 +1,9 @@
 ﻿using BLL;
+using ConsoleApp;
 using DAL;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using ConsoleUI; // For GameController
 
 namespace WebApp.Pages;
 
@@ -14,19 +17,61 @@ public class GamePlay : PageModel
     }
 
     public string GameId { get; set; } = default!;
-    public GameBrain GameBrain { get; set; } = default!;
-    
-    public void OnGet(string id, string player1Name, string player2Name, int? x, int? y)
+    public GameController GameController { get; set; } = default!;
+
+    public void OnGet(string id, string player1Name, string player2Name, int? x, string? action)
     {
         GameId = id;
-        
+
+        // Load configuration
         var conf = _configRepo.Load(id);
-        GameBrain = new GameBrain(conf, player1Name, player2Name);
-        // restore state
-        if (x.HasValue && y.HasValue)
+
+        // Initialize GameController with loaded configuration
+        GameController = new GameController(conf, player1Name, player2Name, conf.Board);
+
+        // Restore whose turn it was
+        if (TempData.ContainsKey("NextMoveByX"))
         {
-            GameBrain.ProcessMove(x.Value, y.Value);
-            // save state
+            GameController.GameBrain.NextMoveByX = (bool)TempData["NextMoveByX"];
+        }
+
+        // Handle post-game actions (save or return)
+        if (!string.IsNullOrEmpty(action))
+        {
+            if (action == "save")
+            {
+                GameController.UpdateConfigurationBoard();
+                _configRepo.Update(GameController.GetConfiguration(), GameController.GetConfiguration().Id.ToString());
+                ViewData["Message"] = "Game saved successfully!";
+            }
+            else if (action == "return")
+            {
+                Response.Redirect("/Index"); // Redirect to main page
+            }
+
+            return;
+        }
+
+        // Make move
+        if (x.HasValue && !GameController.GameBrain.IsGameOver())
+        {
+            var result = GameController.GameBrain.TryMakeMove(x.Value);
+
+            // Store updated turn
+            TempData["NextMoveByX"] = GameController.GameBrain.NextMoveByX;
+
+            // Update board in configuration
+            GameController.UpdateConfigurationBoard();
+            _configRepo.Update(GameController.GetConfiguration(), GameController.GetConfiguration().Id.ToString());
+
+            // Check winner or draw
+            if (result.Winner != ECellState.Empty)
+            {
+                ViewData["Winner"] = result.Winner == ECellState.XWin ? player1Name : player2Name;
+                ViewData["GameOver"] = true; // Flag for Razor page to show save/return options
+            
+            }
         }
     }
+
 }

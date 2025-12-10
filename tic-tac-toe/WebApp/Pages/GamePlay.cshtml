@@ -9,30 +9,49 @@
         <table class="table table-bordered">
             <tr>
                 <td>&nbsp;</td>
-                @for (int x = 0; x < Model.GameBrain.GetBoard().Count; x++)
+                @for (int x = 0; x < Model.GameController.GameBrain.GetBoard().Count; x++)
                 {
                     <td>@GetNumberRepresentation(x + 1)</td>
                 }
             </tr>
-            @for (int y = 0; y < Model.GameBrain.GetBoard().Count; y++)
+            @for (int y = 0; y < Model.GameController.GameBrain.GetBoard()[0].Count; y++)
             {
                 <tr>
                     <td>@GetNumberRepresentation(y + 1)</td>
-                    @for (int x = 0; x < Model.GameBrain.GetBoard().Count; x++)
+                    @for (int x = 0; x < Model.GameController.GameBrain.GetBoard().Count; x++)
                     {
-                        <td onclick="redirectToPage(@x,@y)" style="cursor: pointer;">@GetCellRepresentation(Model.GameBrain.GetBoard()[x][y])</td>
+                        <td onclick="redirectToColumn(@x)" style="cursor: pointer;">
+                            @GetCellRepresentation(Model.GameController.GameBrain.GetBoard()[x][y])
+                        </td>
                     }
                 </tr>
             }
         </table>
+        @if (ViewData["GameOver"] != null && (bool)ViewData["GameOver"])
+        {
+            <p>Winner: @ViewData["Winner"]</p>
+            @if (!string.IsNullOrEmpty(Model.GameId))
+            {
+                <a asp-page="GamePlay" asp-route-id="@Model.GameId" class="btn btn-primary">Save Game</a>
+            }
+
+            <span style="display:inline-block; width:20px;"></span>
+            <a asp-page="GamePlay" asp-route-action="return">Return to Main Menu</a>
+        }
+
+        else
+        {
+            <h3>Next player: @(Model.GameController.GameBrain.IsNextPlayerX() ? Model.GameController.GameBrain.Player1Name : Model.GameController.GameBrain.Player2Name)</h3>
+        }
+
     </div>
 </div>
 
 <script>
-    // Function to redirect to another page
-    function redirectToPage(x,y) {
-        console.log(x,y);
-        window.location.href = "?id=@Uri.EscapeDataString(Model.GameId)&x=" + x + "&y=" + y;
+    function redirectToColumn(x) {
+        window.location.href = "?id=@Uri.EscapeDataString(Model.GameId)&x=" + x +
+            "&player1Name=@Uri.EscapeDataString(Model.GameController.GameBrain.Player1Name)" +
+            "&player2Name=@Uri.EscapeDataString(Model.GameController.GameBrain.Player2Name)";
     }
 </script>
 
