@@ -205,7 +205,7 @@ menuConfig.AddMenuItem("d", "Delete", () =>
     // Load saved games only, exclude templates
     var data = configRepo.List()
         .Select(c => configRepo.Load(c.id))
-        //.Where(c => !c.IsTemplate)
+        .Where(c => !c.IsTemplate)
         .ToList();
 
     if (data.Count == 0)

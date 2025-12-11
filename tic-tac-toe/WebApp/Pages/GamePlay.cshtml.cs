@@ -36,7 +36,7 @@ public class GamePlay : PageModel
             if (conf == null) throw new KeyNotFoundException($"No configuration found with ID {id}");
 
             var runtimeBoard = conf.Board != null ? CloneBoard(conf.Board) : null;
-            
+
             // new game: x starts, loaded game=load whose turn it was
             bool nextMoveByX = conf.IsTemplate || conf.Board == null ? true : conf.NextMoveByX;
 
@@ -95,21 +95,28 @@ public class GamePlay : PageModel
                 GameCache.RuntimeGames.Remove(id);
             }
         }
-        
+
         // Handle save / save as new
+        // save / save as new
         if (!string.IsNullOrEmpty(action) && action == "save")
         {
-            GameController.GameBrain.UpdateConfigurationBoard();
-            
+            // ensure the board in GameConfiguration is up-to-date
+            var boardCopy = CloneBoard(GameController.GameBrain.GetBoard());
+
             if (!string.IsNullOrEmpty(newName))
             {
                 var newConfig = new GameConfiguration
                 {
                     Id = Guid.NewGuid(),
-                    Board = GameController.GameBrain.GetBoard(),
+                    Name = newName,
+                    Board = boardCopy,
                     NextMoveByX = GameController.GameBrain.NextMoveByX,
-                    Name = newName
+                    BoardWidth = GameController.GetConfiguration().BoardWidth,
+                    BoardHeight = GameController.GetConfiguration().BoardHeight,
+                    WinCondition = GameController.GetConfiguration().WinCondition,
+                    IsTemplate = false
                 };
+
                 await _configRepo.SaveAsync(newConfig);
                 ViewData["Message"] = $"Game saved successfully as '{newName}'!";
             }
@@ -118,17 +125,17 @@ public class GamePlay : PageModel
                 var conf = await _configRepo.LoadAsync(id);
                 if (conf != null)
                 {
-                    conf.Board = GameController.GameBrain.GetBoard();
+                    conf.Board = boardCopy;
                     conf.NextMoveByX = GameController.GameBrain.NextMoveByX;
                     await _configRepo.UpdateAsync(conf, conf.Id.ToString());
                     ViewData["Message"] = "Game saved successfully!";
                 }
             }
-            // Remove runtime from cache after save
+
             GameCache.RuntimeGames.Remove(id);
         }
     }
-    
+
     private static List<List<ECellState>> CloneBoard(List<List<ECellState>> board)
     {
         return board
