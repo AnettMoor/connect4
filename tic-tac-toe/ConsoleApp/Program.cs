@@ -1,6 +1,7 @@
 ﻿using BLL;
 using ConsoleApp;
 using DAL;
+using DAL.Migrations;
 using MenuSystem;
 using Microsoft.EntityFrameworkCore;
  
@@ -35,11 +36,68 @@ menu0.AddMenuItem("n", "New game (Classic)", () =>
     return "abc";
 });
 
-
 var menuConfig = new Menu("Connect4 Configurations", EMenuLevel.FirstLevel);
-menuConfig.AddMenuItem("l", "Load", () =>
+
+menuConfig.AddMenuItem("t", "Load premade template", () =>
 {
-    var data = configRepo.List();
+    // Get list of template configs
+    var allConfigs = configRepo.List(); 
+    var templates = allConfigs
+        .Select(c => configRepo.Load(c.id))  
+        .Where(c => c.IsTemplate) // load only templates
+        .ToList();
+
+    if (templates.Count == 0)
+    {
+        Console.WriteLine("No templates found.");
+        return "abc";
+    }
+
+    for (int i = 0; i < templates.Count; i++)
+        Console.WriteLine($"{i + 1}: {templates[i].Name} ({templates[i].BoardWidth}x{templates[i].BoardHeight})");
+
+    Console.Write("Select template to start, 0 to skip: ");
+    if (!int.TryParse(Console.ReadLine(), out int choice) || choice <= 0 || choice > templates.Count)
+    {
+        Console.WriteLine("Skipped.");
+        return "abc";
+    }
+
+    var selected = templates[choice - 1];
+
+    // Always create a controller from a copy to avoid modifying the template
+    var boardCopy = selected.Board != null
+        ? selected.Board.Select(col => new List<ECellState>(col)).ToList()
+        : null;
+    
+    var gameCopy = new GameConfiguration
+    {
+        Id = Guid.NewGuid(),
+        Name = selected.Name,
+        BoardWidth = selected.BoardWidth,
+        BoardHeight = selected.BoardHeight,
+        WinCondition = selected.WinCondition,
+        Board = boardCopy,
+        IsTemplate = false
+    };
+
+    lastController = new GameController(gameCopy, "Player 1", "Player 2", boardCopy);
+
+    lastGameConfig = gameCopy;
+    lastLoadedFileName = null;
+
+    midGameSave();
+    lastController.GameLoop();
+
+    return "abc";
+});
+
+menuConfig.AddMenuItem("l", "Load saved game", () =>
+{
+    var data = configRepo.List()
+        .Select(c => configRepo.Load(c.id)) // load full GameConfiguration
+        .Where(c => !c.IsTemplate) // exclude templates
+        .ToList();
     if (data.Count == 0)
     {
         Console.WriteLine("No saved configurations found.");
@@ -47,7 +105,7 @@ menuConfig.AddMenuItem("l", "Load", () =>
     }
 
     for (int i = 0; i < data.Count; i++)
-        Console.WriteLine($"{i + 1}: {data[i].description}");
+        Console.WriteLine($"{i + 1}: {data[i].Name}");
 
     Console.Write("Select config to load, 0 to skip: ");
     if (!int.TryParse(Console.ReadLine(), out int userChoice) || userChoice <= 0 || userChoice > data.Count)
@@ -56,18 +114,22 @@ menuConfig.AddMenuItem("l", "Load", () =>
         return "abc";
     }
 
-    var selectedId = data[userChoice - 1].id;
-    var gameConfig = configRepo.Load(selectedId);
-    
-    lastController = new GameController(gameConfig, "Player 1", "Player 2", gameConfig.Board);
+    var selected = data[userChoice - 1];
 
-    lastGameConfig = gameConfig;
-    lastLoadedFileName = selectedId;
-    
+    // Deep copy the board to avoid unexpected changes
+    var boardCopy = selected.Board != null
+        ? selected.Board.Select(col => new List<ECellState>(col)).ToList()
+        : null;
+
+    lastController = new GameController(selected, "Player 1", "Player 2", boardCopy);
+
+    lastGameConfig = selected;
+    lastLoadedFileName = selected.Id.ToString();
+
     midGameSave();
     lastController.GameLoop();
-    
-    return "m";
+
+    return "abc";
 });
 
 
@@ -113,7 +175,7 @@ menuConfig.AddMenuItem("e", "Edit", () =>
     }
 });
 
-menuConfig.AddMenuItem("c", "Create", () =>
+menuConfig.AddMenuItem("c", "Create custom game", () =>
 {
     var newConfig = new GameConfiguration();
     Console.Write("Enter new name: ");
@@ -140,33 +202,37 @@ menuConfig.AddMenuItem("c", "Create", () =>
 
 menuConfig.AddMenuItem("d", "Delete", () =>
 {
-    
-    var data = configRepo.List();
+    // Load saved games only, exclude templates
+    var data = configRepo.List()
+        .Select(c => configRepo.Load(c.id))
+        //.Where(c => !c.IsTemplate)
+        .ToList();
+
+    if (data.Count == 0)
+    {
+        Console.WriteLine("No saved games to delete.");
+        return "abc";
+    }
+
     for (int i = 0; i < data.Count; i++)
     {
-        var (id, description) = data[i];
-        Console.WriteLine($"{i + 1}: {description}");
+        Console.WriteLine($"{i + 1}: {data[i].Name} ({data[i].BoardWidth}x{data[i].BoardHeight})");
     }
 
     Console.Write("Select config to delete, 0 to skip: ");
     var userChoiceStr = Console.ReadLine();
-    if (!int.TryParse(userChoiceStr, out int userChoice))
-    {
-        Console.WriteLine("Invalid input!");
-        return "abc";
-    }
-
-    if (userChoice <= 0 || userChoice > data.Count)
+    if (!int.TryParse(userChoiceStr, out int userChoice) || userChoice <= 0 || userChoice > data.Count)
     {
         Console.WriteLine("Skipped.");
         return "abc";
     }
 
-    var (selectedId, selectedDescription) = data[userChoice - 1]; // ignoreId for print
-    
-    configRepo.Delete(selectedId);
-    Console.WriteLine($"Deleted: {selectedDescription}");
+    var selectedConfig = data[userChoice - 1];
 
+    // Delete using repository (BLL)
+    configRepo.Delete(selectedConfig.Id.ToString());
+
+    Console.WriteLine($"Deleted: {selectedConfig.Name}");
     return "abc";
 });
 
@@ -187,10 +253,7 @@ menu0.AddMenuItem("s", "Save game", () =>
     var allConfigs = configRepo.List();
     bool existsInDb = allConfigs.Any(c => c.id == lastGameConfig.Id.ToString());
 
-    if (existsInDb &&
-    lastGameConfig.Name != "Classical Connect4" &&
-        lastGameConfig.Name != "Connect3" && 
-        lastGameConfig.Name != "Connect5$")
+    if (existsInDb && lastGameConfig.IsTemplate == false)
     {
         // if game already exists, update
         configRepo.Update(lastGameConfig, lastGameConfig.Id.ToString());
@@ -238,6 +301,7 @@ void PrecreatedConfigs()
             BoardWidth = width,
             BoardHeight = height,
             WinCondition = winCondition,
+            IsTemplate =  true,
             Board = new List<List<ECellState>>()
         };
 
@@ -287,44 +351,50 @@ AppDbContext GetDbContext()
     return dbContext;
 }
 
-
 void midGameSave()
-{ 
+{
     if (lastController == null) return;
 
     lastController.OnSaveGame = (gameConfig) =>
     {
         lastController.UpdateConfigurationBoard();
-        
-        if (string.IsNullOrWhiteSpace(gameConfig.Name))
-        {
-            Console.Write("Enter a name for this saved game: ");
-            var name = Console.ReadLine();
-            if (!string.IsNullOrWhiteSpace(name))
-                gameConfig.Name = name;
-        }
+        bool isNew = gameConfig.IsTemplate || string.IsNullOrEmpty(lastLoadedFileName);
 
+        // Only save the current game copy
         var allConfigs = configRepo.List();
         bool exists = allConfigs.Any(c => c.id == gameConfig.Id.ToString());
 
-        // update existing config
-        if (exists && gameConfig.Name != "Classical Connect4" && gameConfig.Name != "Connect3" && gameConfig.Name != "Connect5")
+        if (isNew)
+        {
+            // Prompt for a new name
+            Console.Write("Enter name for this saved game: ");
+            var newName = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(newName))
+                newName = "Saved Game";
+
+            gameConfig.Name = newName;
+            gameConfig.Id = Guid.NewGuid(); // ensure new ID
+            gameConfig.IsTemplate = false;   // mark as non-template
+            lastLoadedFileName = null;       // mark as new
+        }
+
+        // Save or update for nontempaltes
+        if (isNew)
+        {
+            configRepo.Save(gameConfig);
+            Console.WriteLine($"Game saved: {gameConfig.Name}");
+        }
+        else
         {
             configRepo.Update(gameConfig, gameConfig.Id.ToString());
             Console.WriteLine($"Game updated: {gameConfig.Name}");
         }
-            // game not existing before - create new save
-        else
-        {
-            gameConfig.Id = Guid.NewGuid();
-            configRepo.Save(gameConfig);
-            Console.WriteLine($"Game saved: {gameConfig.Name}");
-        }
 
-        lastLoadedFileName = gameConfig.Id.ToString();
         lastGameConfig = gameConfig;
+        lastLoadedFileName = gameConfig.Id.ToString();
     };
 }
+
 
 int ReadInt(string message)
     {

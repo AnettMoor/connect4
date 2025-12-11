@@ -31,34 +31,7 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
 
         return res;
     }
-    
-    public async Task<List<(string id, string description)>> ListAsync()
-    {
-        var dir = FilesystemHelpers.GetConfigDirectory(); 
-        var res = new List<(string id, string description)>();
-
-        await Task.Run(() =>
-        {
-            foreach (var fullFileName in Directory.EnumerateFiles(dir))
-            {  
-                var fileName = Path.GetFileName(fullFileName);
-                if (!fileName.EndsWith(".json")) continue;
-                
-                var jsonText = File.ReadAllText(fullFileName);
-                var conf = JsonSerializer.Deserialize<GameConfiguration>(jsonText);
-                if (conf == null) continue;
-            
-                res.Add(
-                    (fileName,
-                        $"{conf.Name} - {conf.BoardWidth}x{conf.BoardHeight} - win_{conf.WinCondition} - {conf.CreatedAt}")
-                );
-            }
-        });
-
-        return res;
-    }
-
-    
+ 
     public string Save(GameConfiguration data)
     {
         var jsonStr = JsonSerializer.Serialize(data);
@@ -134,4 +107,60 @@ public class ConfigRepositoryJson : IRepository<GameConfiguration>
 
         return newFileName;
     }
+    
+    
+    // ASYNC CRUD
+       
+    public async Task<List<(string id, string description)>> ListAsync()
+    {
+        var dir = FilesystemHelpers.GetConfigDirectory(); 
+        var res = new List<(string id, string description)>();
+
+        await Task.Run(() =>
+        {
+            foreach (var fullFileName in Directory.EnumerateFiles(dir))
+            {  
+                var fileName = Path.GetFileName(fullFileName);
+                if (!fileName.EndsWith(".json")) continue;
+                
+                var jsonText = File.ReadAllText(fullFileName);
+                var conf = JsonSerializer.Deserialize<GameConfiguration>(jsonText);
+                if (conf == null) continue;
+            
+                res.Add(
+                    (fileName,
+                        $"{conf.Name} - {conf.BoardWidth}x{conf.BoardHeight} - win_{conf.WinCondition} - {conf.CreatedAt}")
+                );
+            }
+        });
+
+        return res;
+    }
+
+    public async Task<GameConfiguration> LoadAsync(string id)
+    {
+        return await Task.Run(() =>
+        {
+            var conf = Load(id);  // reuse existing Load method
+            if (conf == null)
+                throw new NullReferenceException($"Failed to load configuration {id}");
+            return conf;
+        });
+    }
+    
+    public async Task<string> SaveAsync(GameConfiguration data)
+    {
+        return await Task.Run(() => Save(data));
+    }
+
+    public async Task DeleteAsync(string id)
+    {
+        await Task.Run(() => Delete(id));
+    }
+
+    public async Task<string> UpdateAsync(GameConfiguration data, string oldFileName)
+    {
+        return await Task.Run(() => Update(data, oldFileName));
+    }
+
 }

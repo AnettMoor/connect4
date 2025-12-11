@@ -1,4 +1,5 @@
 ﻿using System.Collections.Specialized;
+using BLL;
 
 namespace DAL;
 
@@ -13,5 +14,12 @@ public interface IRepository<TData>
     TData Load(string id);
     void Delete(string id);
     string Update(TData data, string oldFileName);
+    
+    // async crud
+    Task<GameConfiguration> LoadAsync(string id);
+    Task<string> SaveAsync(TData data);
+    Task DeleteAsync(string id);
+    Task<string> UpdateAsync(TData data, string oldFileName);
+    
 
 }

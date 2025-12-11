@@ -1,0 +1,35 @@
+﻿@page
+@model WebApp.Pages.NewGame
+
+
+<h1>Start a new game</h1>
+
+<form method="post">
+    <div class="row">
+        <div class="col-md-4">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="ConfigId" class="control-label"></label>
+                <select asp-for="ConfigId" class="form-select" asp-items="Model.ConfigurationSelectList"></select>
+                <span asp-validation-for="ConfigId" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Player1Name" class="control-label"></label>
+                <input asp-for="Player1Name" class="form-control" />
+                <span asp-validation-for="Player1Name" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Player2Name" class="control-label"></label>
+                <input asp-for="Player2Name" class="form-control" />
+                <span asp-validation-for="Player2Name" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <input type="submit" value="Start" class="btn btn-primary" />
+            </div>
+        </div>
+    </div>
+</form>

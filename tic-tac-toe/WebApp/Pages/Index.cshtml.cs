@@ -1,6 +1,5 @@
 using BLL;
 using DAL;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace WebApp.Pages;
@@ -13,11 +12,23 @@ public class IndexModel : PageModel
     {
         _configRepo = configRepo;
     }
-
-    public List<(string id, string description)> Configurations { get; set; } = default!;
-
+    
+    public List<GameConfiguration> Configurations { get; set; } = new();
+    
     public async Task OnGetAsync()
     {
-        Configurations = await _configRepo.ListAsync();
+        // Load all saved (non-template) games
+        var allItems = await _configRepo.ListAsync();
+
+        var savedGames = new List<GameConfiguration>();
+
+        foreach (var item in allItems)
+        {
+            var fullConfig = await _configRepo.LoadAsync(item.id);
+            if (!fullConfig.IsTemplate)
+                savedGames.Add(fullConfig);
+        }
+
+        Configurations = savedGames;
     }
 }

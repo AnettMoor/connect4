@@ -12,6 +12,11 @@ public class GameConfiguration : BaseEntity
 
     public string CreatedAt { get; set; } = DateTime.Now.ToString("HH_mm_ddMMyyyy");
     
+    public bool IsTemplate { get; set; } = false;
+    
+    public bool NextMoveByX { get; set; }
+
+    
     
     // functions for save
     [NotMapped] // do not create a database column, im storing a serialized board in database, not this one

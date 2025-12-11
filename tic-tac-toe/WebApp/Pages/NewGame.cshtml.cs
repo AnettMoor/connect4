@@ -31,33 +31,46 @@ public class NewGame : PageModel
 
     public async Task OnGetAsync()
     {
-        await LoadDataAsync();
+        await LoadTemplatesAsync();
     }
-
-    private async Task LoadDataAsync()
+    
+    private async Task LoadTemplatesAsync()
     {
-        var data = await _configRepo.ListAsync();
-        var data2 = data.Select(i => new
+        // Load all items (id + description)
+        var allItems = await _configRepo.ListAsync();
+
+        var templates = new List<GameConfiguration>();
+
+        // Load full configuration for each item asynchronously
+        foreach (var item in allItems)
         {
-            id = i.id,
-            value = i.description
-        }).ToList();
-        
-        ConfigurationSelectList = new SelectList(data2, "id", "value");
+            var fullConfig = await _configRepo.LoadAsync(item.id);
+            if (fullConfig.IsTemplate)
+                templates.Add(fullConfig);
+        }
+
+        // Prepare select list
+        var selectItems = templates
+            .Select(i => new { id = i.Id, value = i.Name })
+            .ToList();
+
+        ConfigurationSelectList = new SelectList(selectItems, "id", "value");
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
         {
-            await LoadDataAsync();
+            await LoadTemplatesAsync();
             return Page();
         }
-        
-        // TODO: save game
-        
-        // redirect to gameplay
-        return RedirectToPage("./GamePlay", new { id = ConfigId, player1Name = Player1Name, player2Name = Player2Name });
-    }
 
+        // Redirect to gameplay page with selected template
+        return RedirectToPage("./GamePlay", new
+        {
+            id = ConfigId,
+            player1Name = Player1Name,
+            player2Name = Player2Name
+        });
+    }
 }

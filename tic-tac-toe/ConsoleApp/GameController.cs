@@ -8,23 +8,33 @@ public class GameController
     public GameBrain GameBrain { get; set; }
     public Action<GameConfiguration>? OnSaveGame { get; set; }
     public bool GameSaved {get; set;}
+    
+    private GameConfiguration _configuration;
+
 
 
     public GameController()
     {
+        _configuration = new GameConfiguration();
         GameBrain = new GameBrain(new GameConfiguration(), "Player 1", "Player 2");
     }
 
     public GameController(GameConfiguration configuration, string player1, string player2, List<List<ECellState>>? board = null)
     {
+        _configuration = configuration;     // <-- FIX
         GameBrain = new GameBrain(configuration, player1, player2, board);
     }
+
     
     // TODO is there a way to use it straight up without the static warnings??
+
     public GameConfiguration GetConfiguration()
     {
-        return GameBrain.GetConfiguration();
+        _configuration.Board = GameBrain.GetBoard();
+        _configuration.NextMoveByX = GameBrain.NextMoveByX;
+        return _configuration;
     }
+
     public void UpdateConfigurationBoard()
     {
         GameBrain.UpdateConfigurationBoard();
