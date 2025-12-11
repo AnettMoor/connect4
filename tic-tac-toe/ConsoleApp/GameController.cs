@@ -21,8 +21,9 @@ public class GameController
 
     public GameController(GameConfiguration configuration, string player1, string player2, List<List<ECellState>>? board = null)
     {
-        _configuration = configuration;     // <-- FIX
+        _configuration = configuration; 
         GameBrain = new GameBrain(configuration, player1, player2, board);
+        GameBrain.NextMoveByX = configuration.NextMoveByX;
     }
 
     

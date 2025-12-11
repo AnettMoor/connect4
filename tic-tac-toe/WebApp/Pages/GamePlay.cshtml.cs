@@ -29,36 +29,40 @@ public class GamePlay : PageModel
 
         GameId = id;
 
-        // Load the configuration from the repository
-        var conf = await _configRepo.LoadAsync(id);
-        if (conf == null) throw new KeyNotFoundException($"No configuration found with ID {id}");
+        // Load DB config if not in cache
+        if (!GameCache.RuntimeGames.TryGetValue(id, out var runtimeConfig))
+        {
+            var conf = await _configRepo.LoadAsync(id);
+            if (conf == null) throw new KeyNotFoundException($"No configuration found with ID {id}");
 
-        // Initialize GameController with the loaded board
-        GameController = new GameController(conf, player1Name, player2Name);
+            var runtimeBoard = conf.Board != null ? CloneBoard(conf.Board) : null;
 
-// Restore board
-        GameController.GameBrain.GameBoard = conf.Board;
+            runtimeConfig = new GameConfiguration
+            {
+                Id = conf.Id,
+                Name = conf.Name,
+                BoardWidth = conf.BoardWidth,
+                BoardHeight = conf.BoardHeight,
+                WinCondition = conf.WinCondition,
+                IsTemplate = conf.IsTemplate,
+                NextMoveByX = true,
+                Board = runtimeBoard
+            };
 
-// Restore turn
-        GameController.GameBrain.NextMoveByX = conf.NextMoveByX;
+            GameCache.RuntimeGames[id] = runtimeConfig; // store in cache
+        }
 
+        // Build controller
+        GameController = new GameController(runtimeConfig, player1Name, player2Name, runtimeConfig.Board);
 
-        // Handle a move
+        // Handle move
         if (x.HasValue && !GameController.GameBrain.IsGameOver())
         {
             var result = GameController.GameBrain.TryMakeMove(x.Value);
-            GameController.UpdateConfigurationBoard();
-            var cfg = GameController.GetConfiguration();
-            await _configRepo.UpdateAsync(cfg, id);
 
-
-            // Save updated board
-            GameController.UpdateConfigurationBoard();
-            await _configRepo.UpdateAsync(GameController.GetConfiguration(), id);
-
-            // DO NOT reload config here
-            // DO NOT overwrite GameBoard
-            // Rendering will now show updated state
+            // Update runtimeConfig (cache)
+            runtimeConfig.Board = GameController.GameBrain.GetBoard();
+            runtimeConfig.NextMoveByX = GameController.GameBrain.NextMoveByX;
 
             if (result.Winner != ECellState.Empty)
             {
@@ -76,6 +80,7 @@ public class GamePlay : PageModel
                 {
                     Id = Guid.NewGuid(),
                     Board = GameController.GameBrain.GetBoard(),
+                    NextMoveByX = GameController.GameBrain.NextMoveByX,
                     Name = newName
                 };
                 await _configRepo.SaveAsync(newConfig);
@@ -83,11 +88,26 @@ public class GamePlay : PageModel
             }
             else
             {
-                GameController.UpdateConfigurationBoard();
-                await _configRepo.UpdateAsync(GameController.GetConfiguration(),
-                    GameController.GetConfiguration().Id.ToString());
-                ViewData["Message"] = "Game saved successfully!";
+                var conf = await _configRepo.LoadAsync(id);
+                if (conf != null)
+                {
+                    conf.Board = GameController.GameBrain.GetBoard();
+                    conf.NextMoveByX = GameController.GameBrain.NextMoveByX;
+                    await _configRepo.UpdateAsync(conf, conf.Id.ToString());
+                    ViewData["Message"] = "Game saved successfully!";
+                }
             }
+
+            // Remove runtime from cache after save
+            GameCache.RuntimeGames.Remove(id);
         }
+    }
+
+
+    private static List<List<ECellState>> CloneBoard(List<List<ECellState>> board)
+    {
+        return board
+            .Select(col => col.ToList())
+            .ToList();
     }
 }
