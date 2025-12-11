@@ -16,6 +16,7 @@
     <tr>
         <th>Saved Game</th>
         <th>Description</th>
+        <th>Players</th>
     </tr>
     </thead>
     <tbody>
@@ -24,11 +25,12 @@
         <tr>
             <td>@conf.Name</td>
             <td>@($"{conf.BoardWidth}x{conf.BoardHeight}, win condition: {conf.WinCondition}, created at: {conf.CreatedAt}")</td>
+            <td>@conf.Player1Name vs @conf.Player2Name</td>
             <td>
                 <form method="get" asp-page="./GamePlay">
                     <input type="hidden" name="id" value="@conf.Id" />
-                    <input type="hidden" name="player1Name" value="Player1" />
-                    <input type="hidden" name="player2Name" value="Player2" />
+                    <input type="hidden" name="player1Name" value="@conf.Player1Name" />
+                    <input type="hidden" name="player2Name" value="@conf.Player2Name" />
                     <button type="submit" class="btn btn-primary btn-sm">Continue Game</button>
                 </form>
             </td>
@@ -39,7 +41,6 @@
             </form>
             </td>
         </tr>
-
     }
     </tbody>
 </table>

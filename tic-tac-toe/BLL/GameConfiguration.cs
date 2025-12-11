@@ -16,6 +16,10 @@ public class GameConfiguration : BaseEntity
     
     public bool NextMoveByX { get; set; }
 
+    public string Player1Name { get; set; } = "player1";
+    public string Player2Name { get; set; } = "player2";
+
+
     
     
     // functions for save

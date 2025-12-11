@@ -114,7 +114,9 @@ public class GamePlay : PageModel
                     BoardWidth = GameController.GetConfiguration().BoardWidth,
                     BoardHeight = GameController.GetConfiguration().BoardHeight,
                     WinCondition = GameController.GetConfiguration().WinCondition,
-                    IsTemplate = false
+                    IsTemplate = false,
+                    Player1Name = player1Name,
+                    Player2Name = player2Name
                 };
 
                 await _configRepo.SaveAsync(newConfig);
@@ -127,6 +129,8 @@ public class GamePlay : PageModel
                 {
                     conf.Board = boardCopy;
                     conf.NextMoveByX = GameController.GameBrain.NextMoveByX;
+                    conf.Player1Name = player1Name;
+                    conf.Player2Name = player2Name;
                     await _configRepo.UpdateAsync(conf, conf.Id.ToString());
                     ViewData["Message"] = "Game saved successfully!";
                 }
