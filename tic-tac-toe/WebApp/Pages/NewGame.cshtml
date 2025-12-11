@@ -62,8 +62,7 @@ function checkCustom() {
     var customFields = document.getElementById("customConfigFields");
     var isCustom = select.value === "custom";
     customFields.style.display = isCustom ? "block" : "none";
-
-    // Ensure only one hidden input exists
+    
     var hiddenInput = document.querySelector('input[name="IsCustom"]');
     if (!hiddenInput) {
         hiddenInput = document.createElement("input");

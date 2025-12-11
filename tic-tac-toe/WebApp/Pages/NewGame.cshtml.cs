@@ -28,15 +28,12 @@ public class NewGame : PageModel
     [BindProperty] public bool IsCustom { get; set; } = false;
 
     [BindProperty]
-    [Range(3, 20, ErrorMessage = "Board width must be between 3 and 15.")]
     public int BoardWidth { get; set; } = 5;
 
     [BindProperty]
-    [Range(3, 20, ErrorMessage = "Board height must be between 3 and 15.")]
     public int BoardHeight { get; set; } = 5;
 
     [BindProperty]
-    [Range(3, 10, ErrorMessage = "Win condition must be between 3 and 10.")]
     public int WinCondition { get; set; } = 4;
 
     public async Task OnGetAsync()
@@ -59,7 +56,7 @@ public class NewGame : PageModel
                 templates.Add(fullConfig);
         }
 
-        // Prepare select list
+        // configuration list
         var selectItems = templates
             .Select(i => new { id = i.Id, value = i.Name })
             .ToList();
@@ -92,6 +89,13 @@ public class NewGame : PageModel
 
             await _configRepo.SaveAsync(newConfig);
             configIdToUse = newConfig.Id.ToString();
+        }
+        else if (ConfigId == "custom" || string.IsNullOrEmpty(ConfigId))
+        {
+            // Invalid template selection for customs
+            ModelState.AddModelError("ConfigId", "Please reselect template.");
+            await LoadTemplatesAsync();
+            return Page();
         }
 
         return RedirectToPage("./GamePlay", new

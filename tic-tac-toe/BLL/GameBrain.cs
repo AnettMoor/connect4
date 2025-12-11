@@ -8,8 +8,6 @@ public class GameBrain
     public string Player2Name { get; set; }
 
     public bool NextMoveByX { get; set; } = true;
-
-    
     
     // for load
     public bool IsGameOver()

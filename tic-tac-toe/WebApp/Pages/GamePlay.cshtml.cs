@@ -71,8 +71,6 @@ public class GamePlay : PageModel
 
                 // Remove runtime from cache
                 GameCache.RuntimeGames.Remove(id);
-
-                // Stop processing further moves
                 return;
             }
 
@@ -95,12 +93,10 @@ public class GamePlay : PageModel
                 GameCache.RuntimeGames.Remove(id);
             }
         }
-
-        // Handle save / save as new
+        
         // save / save as new
         if (!string.IsNullOrEmpty(action) && action == "save")
         {
-            // ensure the board in GameConfiguration is up-to-date
             var boardCopy = CloneBoard(GameController.GameBrain.GetBoard());
 
             if (!string.IsNullOrEmpty(newName))

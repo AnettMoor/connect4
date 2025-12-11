@@ -26,9 +26,6 @@ public class GameController
         GameBrain.NextMoveByX = configuration.NextMoveByX;
     }
 
-    
-    // TODO is there a way to use it straight up without the static warnings??
-
     public GameConfiguration GetConfiguration()
     {
         _configuration.Board = GameBrain.GetBoard();
