@@ -102,8 +102,7 @@ public class GamePlay : PageModel
             GameCache.RuntimeGames.Remove(id);
         }
     }
-
-
+    
     private static List<List<ECellState>> CloneBoard(List<List<ECellState>> board)
     {
         return board
