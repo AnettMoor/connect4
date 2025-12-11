@@ -217,4 +217,15 @@ public class GameBrain
         GameConfiguration.Board = boardList;
         GameConfiguration.NextMoveByX = this.NextMoveByX;
     }
+    public bool IsBoardFull()
+    {
+        // If any cell is empty, the board is not full
+        for (int x = 0; x < GameConfiguration.BoardWidth; x++)
+        for (int y = 0; y < GameConfiguration.BoardHeight; y++)
+            if (GameBoard[x][y] == ECellState.Empty)
+                return false;
+
+        return true; // all cells are filled
+    }
+
 }

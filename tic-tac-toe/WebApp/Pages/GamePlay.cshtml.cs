@@ -36,6 +36,9 @@ public class GamePlay : PageModel
             if (conf == null) throw new KeyNotFoundException($"No configuration found with ID {id}");
 
             var runtimeBoard = conf.Board != null ? CloneBoard(conf.Board) : null;
+            
+            // new game: x starts, loaded game=load whose turn it was
+            bool nextMoveByX = conf.IsTemplate || conf.Board == null ? true : conf.NextMoveByX;
 
             runtimeConfig = new GameConfiguration
             {
@@ -45,7 +48,7 @@ public class GamePlay : PageModel
                 BoardHeight = conf.BoardHeight,
                 WinCondition = conf.WinCondition,
                 IsTemplate = conf.IsTemplate,
-                NextMoveByX = true,
+                NextMoveByX = nextMoveByX,
                 Board = runtimeBoard
             };
 
@@ -56,11 +59,27 @@ public class GamePlay : PageModel
         GameController = new GameController(runtimeConfig, player1Name, player2Name, runtimeConfig.Board);
 
         // Handle move
-        if (x.HasValue && !GameController.GameBrain.IsGameOver())
+        if (x.HasValue)
         {
+            // Check if game is already over
+            if (GameController.GameBrain.IsGameOver() || GameController.GameBrain.IsBoardFull())
+            {
+                // Determine winner or draw
+                var winner = GetWinnerName(GameController.GameBrain, player1Name, player2Name);
+                ViewData["Winner"] = winner;
+                ViewData["GameOver"] = true;
+
+                // Remove runtime from cache
+                GameCache.RuntimeGames.Remove(id);
+
+                // Stop processing further moves
+                return;
+            }
+
+            // Process move if game is not over
             var result = GameController.GameBrain.TryMakeMove(x.Value);
 
-            // Update runtimeConfig (cache)
+            // Update cache
             runtimeConfig.Board = GameController.GameBrain.GetBoard();
             runtimeConfig.NextMoveByX = GameController.GameBrain.NextMoveByX;
 
@@ -69,11 +88,19 @@ public class GamePlay : PageModel
                 ViewData["Winner"] = result.Winner == ECellState.XWin ? player1Name : player2Name;
                 ViewData["GameOver"] = true;
             }
+            else if (GameController.GameBrain.IsBoardFull())
+            {
+                ViewData["Winner"] = "Draw";
+                ViewData["GameOver"] = true;
+                GameCache.RuntimeGames.Remove(id);
+            }
         }
-
+        
         // Handle save / save as new
         if (!string.IsNullOrEmpty(action) && action == "save")
         {
+            GameController.GameBrain.UpdateConfigurationBoard();
+            
             if (!string.IsNullOrEmpty(newName))
             {
                 var newConfig = new GameConfiguration
@@ -97,7 +124,6 @@ public class GamePlay : PageModel
                     ViewData["Message"] = "Game saved successfully!";
                 }
             }
-
             // Remove runtime from cache after save
             GameCache.RuntimeGames.Remove(id);
         }
@@ -108,5 +134,16 @@ public class GamePlay : PageModel
         return board
             .Select(col => col.ToList())
             .ToList();
+    }
+    private string GetWinnerName(GameBrain brain, string player1, string player2)
+    {
+        for (int x = 0; x < brain.GameBoard.Count; x++)
+        for (int y = 0; y < brain.GameBoard[0].Count; y++)
+        {
+            var winner = brain.GetWinner(x, y);
+            if (winner == ECellState.XWin) return player1;
+            if (winner == ECellState.OWin) return player2;
+        }
+        return "Draw";
     }
 }

@@ -7,6 +7,13 @@
 <a asp-page="./NewGame">New Game</a>
 
 
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-success">
+        @Model.StatusMessage
+    </div>
+}
+
 <table class="table table-striped">
     <thead>
     <tr>
@@ -20,8 +27,22 @@
         <tr>
             <td>@conf.Name</td>
             <td>@($"{conf.BoardWidth}x{conf.BoardHeight}, win condition: {conf.WinCondition}, created at: {conf.CreatedAt}")</td>
-            <td><a asp-page="./ContinueGame">Continue Game</a><td>
+            <td>
+                <form method="get" asp-page="./GamePlay">
+                    <input type="hidden" name="id" value="@conf.Id" />
+                    <input type="hidden" name="player1Name" value="Player1" />
+                    <input type="hidden" name="player2Name" value="Player2" />
+                    <button type="submit" class="btn btn-primary btn-sm">Continue Game</button>
+                </form>
+            </td>
+            <td>
+            <form method="post" asp-page-handler="Delete" style="display:inline-block;">
+                <input type="hidden" name="id" value="@conf.Id" />
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this game?');">Delete</button>
+            </form>
+            </td>
         </tr>
+
     }
     </tbody>
 </table>
