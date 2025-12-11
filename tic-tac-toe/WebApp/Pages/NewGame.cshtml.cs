@@ -15,25 +15,35 @@ public class NewGame : PageModel
     {
         _configRepo = configRepo;
     }
-    
+
     public SelectList ConfigurationSelectList { get; set; } = default!;
 
-    [BindProperty]
-    public string ConfigId { get; set; } = default!;
+    [BindProperty] public string ConfigId { get; set; } = default!;
+
+    [BindProperty] [Length(3, 32)] public string Player1Name { get; set; } = default!;
+
+    [BindProperty] [Length(3, 32)] public string Player2Name { get; set; } = default!;
+
+    // fir custom configurations
+    [BindProperty] public bool IsCustom { get; set; } = false;
 
     [BindProperty]
-    [Length(3, 32)]
-    public string Player1Name { get; set; } = default!;
+    [Range(3, 20, ErrorMessage = "Board width must be between 3 and 15.")]
+    public int BoardWidth { get; set; } = 5;
 
     [BindProperty]
-    [Length(3, 32)]
-    public string Player2Name { get; set; } = default!;
+    [Range(3, 20, ErrorMessage = "Board height must be between 3 and 15.")]
+    public int BoardHeight { get; set; } = 5;
+
+    [BindProperty]
+    [Range(3, 10, ErrorMessage = "Win condition must be between 3 and 10.")]
+    public int WinCondition { get; set; } = 4;
 
     public async Task OnGetAsync()
     {
         await LoadTemplatesAsync();
     }
-    
+
     private async Task LoadTemplatesAsync()
     {
         // Load all items (id + description)
@@ -53,7 +63,7 @@ public class NewGame : PageModel
         var selectItems = templates
             .Select(i => new { id = i.Id, value = i.Name })
             .ToList();
-
+        
         ConfigurationSelectList = new SelectList(selectItems, "id", "value");
     }
 
@@ -64,11 +74,29 @@ public class NewGame : PageModel
             await LoadTemplatesAsync();
             return Page();
         }
+        
+        string configIdToUse = ConfigId;
 
-        // Redirect to gameplay page with selected template
+        // If custom, generate a new configuration
+        if (IsCustom)
+        {
+            var newConfig = new GameConfiguration
+            {
+                Id = Guid.NewGuid(),
+                Name = "Custom",
+                BoardWidth = BoardWidth,
+                BoardHeight = BoardHeight,
+                WinCondition = WinCondition,
+                IsTemplate = false,
+            };
+
+            await _configRepo.SaveAsync(newConfig);
+            configIdToUse = newConfig.Id.ToString();
+        }
+
         return RedirectToPage("./GamePlay", new
         {
-            id = ConfigId,
+            id = configIdToUse,
             player1Name = Player1Name,
             player2Name = Player2Name
         });

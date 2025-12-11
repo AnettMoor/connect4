@@ -15,10 +15,10 @@ Console.WriteLine("Hello, Connect4!");
 IRepository<GameConfiguration> configRepo;
 
 // Choose ONE!
-//configRepo = new ConfigRepositoryJson();
+configRepo = new ConfigRepositoryJson();
 
-using var dbContext = GetDbContext();
-configRepo = new ConfigRepositoryEF(dbContext);
+//using var dbContext = GetDbContext();
+//configRepo = new ConfigRepositoryEF(dbContext);
 
 
 var menu0 = new Menu("Connect4 Main Menu", EMenuLevel.Root);
@@ -78,7 +78,7 @@ menuConfig.AddMenuItem("t", "Load premade template", () =>
         BoardHeight = selected.BoardHeight,
         WinCondition = selected.WinCondition,
         Board = boardCopy,
-        IsTemplate = false
+        IsTemplate = false,
     };
 
     lastController = new GameController(gameCopy, "Player 1", "Player 2", boardCopy);

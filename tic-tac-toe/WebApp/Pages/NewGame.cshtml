@@ -1,7 +1,6 @@
 ﻿@page
 @model WebApp.Pages.NewGame
 
-
 <h1>Start a new game</h1>
 
 <form method="post">
@@ -11,7 +10,10 @@
 
             <div class="form-group">
                 <label asp-for="ConfigId" class="control-label"></label>
-                <select asp-for="ConfigId" class="form-select" asp-items="Model.ConfigurationSelectList"></select>
+                <select asp-for="ConfigId" class="form-select" asp-items="Model.ConfigurationSelectList" id="configSelect" onchange="checkCustom()">
+                    <option value="">-- Select Template --</option>
+                    <option value="custom">Custom</option>
+                </select>
                 <span asp-validation-for="ConfigId" class="text-danger"></span>
             </div>
             
@@ -26,10 +28,49 @@
                 <input asp-for="Player2Name" class="form-control" />
                 <span asp-validation-for="Player2Name" class="text-danger"></span>
             </div>
-            
-            <div class="form-group">
+
+            <div id="customConfigFields" style="display:none; margin-top:10px;">
+                <div class="form-group">
+                    <label asp-for="BoardWidth" class="control-label"></label>
+                    <input asp-for="BoardWidth" class="form-control" />
+                    <span asp-validation-for="BoardWidth" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="BoardHeight" class="control-label"></label>
+                    <input asp-for="BoardHeight" class="form-control" />
+                    <span asp-validation-for="BoardHeight" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="WinCondition" class="control-label"></label>
+                    <input asp-for="WinCondition" class="form-control" />
+                    <span asp-validation-for="WinCondition" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top:10px;">
                 <input type="submit" value="Start" class="btn btn-primary" />
             </div>
         </div>
     </div>
 </form>
+
+<script>
+function checkCustom() {
+    var select = document.getElementById("configSelect");
+    var customFields = document.getElementById("customConfigFields");
+    var isCustom = select.value === "custom";
+    customFields.style.display = isCustom ? "block" : "none";
+
+    // Ensure only one hidden input exists
+    var hiddenInput = document.querySelector('input[name="IsCustom"]');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.name = "IsCustom";
+        document.forms[0].appendChild(hiddenInput);
+    }
+    hiddenInput.value = isCustom;
+}
+</script>

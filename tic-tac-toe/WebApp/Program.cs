@@ -25,8 +25,8 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // custom dependencies
 // AddScoped, AddSingleton, AddTransient
 //CHOOSE ONE!!!
-//builder.Services.AddScoped<IRepository<GameConfiguration>, ConfigRepositoryJson>();
-builder.Services.AddScoped<IRepository<GameConfiguration>, ConfigRepositoryEF>();
+builder.Services.AddScoped<IRepository<GameConfiguration>, ConfigRepositoryJson>();
+//builder.Services.AddScoped<IRepository<GameConfiguration>, ConfigRepositoryEF>();
 
 builder.Services.AddRazorPages();
 
